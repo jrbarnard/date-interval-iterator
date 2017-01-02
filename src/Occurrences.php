@@ -1,13 +1,20 @@
 <?php
 namespace DateIntervalIterator;
 
+use DateIntervalIterator\Exceptions\InvalidArgumentException;
+use DateTime;
+
 /**
  * Class Occurrences
- * A wrapper to store the found occurrence in
+ * A wrapper to store the found occurrences in
  * @package DateIntervalIterator
  */
 class Occurrences implements \ArrayAccess, \Countable
 {
+    /**
+     * @var array
+     */
+    protected $occurrences = [];
 
     /**
      * Whether a offset exists
@@ -25,7 +32,11 @@ class Occurrences implements \ArrayAccess, \Countable
      */
     public function offsetExists($offset)
     {
-        // TODO: Implement offsetExists() method.
+        if (!isset($this->getOccurrences()[$offset])) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -41,7 +52,7 @@ class Occurrences implements \ArrayAccess, \Countable
      */
     public function offsetGet($offset)
     {
-        // TODO: Implement offsetGet() method.
+        return $this->getOccurrences()[$offset];
     }
 
     /**
@@ -60,7 +71,13 @@ class Occurrences implements \ArrayAccess, \Countable
      */
     public function offsetSet($offset, $value)
     {
-        // TODO: Implement offsetSet() method.
+        if (!$value instanceof DateTime) {
+            throw new InvalidArgumentException(
+                'You must pass a valid DateTime instance through as an occurrence'
+            );
+        }
+
+        $this->occurrences[$offset] = $value;
     }
 
     /**
@@ -76,7 +93,7 @@ class Occurrences implements \ArrayAccess, \Countable
      */
     public function offsetUnset($offset)
     {
-        // TODO: Implement offsetUnset() method.
+        unset($this->occurrences[$offset]);
     }
 
     /**
@@ -90,5 +107,52 @@ class Occurrences implements \ArrayAccess, \Countable
      */
     public function count()
     {
-        // TODO: Implement count() method.
-}}
+        return count($this->getOccurrences());
+    }
+
+    /**
+     * @return array
+     */
+    public function toArray()
+    {
+        return $this->getOccurrences();
+    }
+
+    /**
+     * @return array
+     */
+    public function getOccurrences()
+    {
+        return $this->occurrences;
+    }
+
+    /**
+     * @param DateTime $occurrence
+     *
+     * @return $this
+     */
+    public function push(DateTime $occurrence)
+    {
+        $this->occurrences[] = $occurrence;
+
+        return $this;
+    }
+
+    /**
+     * @param $offset
+     *
+     * @return mixed
+     */
+    public function getOccurrence($offset)
+    {
+        return $this->offsetGet($offset);
+    }
+
+    /**
+     * @return DateTime
+     */
+    public function pop()
+    {
+        return array_pop($this->occurrences);
+    }
+}

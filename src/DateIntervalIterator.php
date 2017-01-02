@@ -14,6 +14,11 @@ use DateIntervalIterator\Intervals\IntervalInterface;
 class DateIntervalIterator implements \Iterator, \Countable
 {
     /**
+     * The format we want the date times as
+     */
+    const DATE_TIME_FORMAT = 'Y-m-d H:i:s';
+
+    /**
      * @var IntervalInterface
      */
     protected $interval;
@@ -25,7 +30,7 @@ class DateIntervalIterator implements \Iterator, \Countable
     protected $start;
 
     /**
-     * When to end the iterator after, number of occurrences or Carbon instance
+     * When to end the iterator after, number of occurrences or DateTime instance
      * @var int|DateTime
      */
     protected $end;
@@ -131,7 +136,7 @@ class DateIntervalIterator implements \Iterator, \Countable
 
     /**
      * Set the end after
-     * This can be an int between 1 and 100 or a carbon instance / datetime string
+     * This can be an int between 1 and 100 or a DateTime instance / datetime string
      * @param int|DateTime $endAfter
      * @return $this
      * @throws InvalidArgumentException
@@ -144,7 +149,7 @@ class DateIntervalIterator implements \Iterator, \Countable
             return $this;
         }
 
-        // convert to a Carbon instance (handles datetime strings)
+        // convert to a DateTime instance (handles datetime strings)
         if (is_string($endAfter)) {
             $endAfter = new DateTime(strtotime($endAfter));
         }
@@ -161,7 +166,7 @@ class DateIntervalIterator implements \Iterator, \Countable
         }
 
         throw new InvalidArgumentException(
-            'You must pass a valid endAfter datetime string, Carbon instance or int within the valid occurrences range'
+            'You must pass a valid endAfter datetime string, DateTime instance or int within the valid occurrences range'
         );
     }
 
@@ -216,7 +221,7 @@ class DateIntervalIterator implements \Iterator, \Countable
      */
     public function current()
     {
-        // TODO: Implement current() method.
+        return $this->occurrences[$this->key()];
     }
 
     /**
@@ -227,7 +232,16 @@ class DateIntervalIterator implements \Iterator, \Countable
      */
     public function next()
     {
-        // TODO: Implement next() method.
+        $this->ifStartGetFirst();
+
+        // if we don't have the next occurrence stored, generate
+        if (!$this->occurrenceAlreadySet($this->key() + 1)) {
+            $current = $this->current();
+            $this->getNextOccurrence($current);
+        }
+
+        // up the count
+        $this->currentOccurrenceKey++;
     }
 
     /**
@@ -238,7 +252,7 @@ class DateIntervalIterator implements \Iterator, \Countable
      */
     public function key()
     {
-        // TODO: Implement key() method.
+        return $this->currentOccurrenceKey;
     }
 
     /**
@@ -250,7 +264,15 @@ class DateIntervalIterator implements \Iterator, \Countable
      */
     public function valid()
     {
-        // TODO: Implement valid() method.
+        if ($this->occurrenceCount > $this->getMaxOccurrences()) {
+            return false;
+        }
+
+        if (!$this->occurrenceAlreadySet($this->key())) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -261,7 +283,9 @@ class DateIntervalIterator implements \Iterator, \Countable
      */
     public function rewind()
     {
-        // TODO: Implement rewind() method.
+        $this->ifStartGetFirst();
+
+        $this->currentOccurrenceKey = 0;
     }
 
     /**
@@ -275,6 +299,161 @@ class DateIntervalIterator implements \Iterator, \Countable
      */
     public function count()
     {
-        // TODO: Implement count() method.
+        if ($this->occurrenceCount === 0) {
+            foreach($this as $occurrence) {
+                // do nothing, just iterating all occurrences for count
+            }
+        }
+
+        return $this->occurrenceCount;
+    }
+
+    /**
+     * Checks to see if an occurrence by key is already set
+     * @param $occurrence
+     * @return bool
+     */
+    public function occurrenceAlreadySet($occurrence)
+    {
+        if (!isset($this->occurrences[$occurrence])) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Add a new occurrence to the array and up the occurrence count
+     * @param DateTime $occurrence
+     * @return $this
+     */
+    protected function addOccurrence(DateTime $occurrence)
+    {
+        $this->occurrences[] = $occurrence;
+        $this->occurrenceCount++;
+
+        return $this;
+    }
+
+    /**
+     * @param int $key
+     * @return mixed
+     */
+    protected function getOccurrence($key)
+    {
+        return $this->occurrences[$key];
+    }
+
+    /**
+     * if we are at the start go to the first occurrence
+     * @return DateTime
+     */
+    protected function ifStartGetFirst()
+    {
+        if (is_null($this->key())) {
+            return $this->getFirstOccurrence();
+        }
+    }
+
+    /**
+     * Pass through to help us get the first occurrence within the occurrences
+     * @return DateTime
+     */
+    protected function getFirstOccurrence()
+    {
+        if ($this->occurrenceAlreadySet(0)) {
+            $firstOccurrence =  $this->getOccurrence(0);
+        } else {
+            $firstOccurrence = $this->getNextOccurrence($this->getStart());
+        }
+        return $firstOccurrence;
+    }
+
+    /**
+     * Gets the next occurrence within the iterator
+     * @param DateTime $current
+     * @return DateTime|bool
+     * @throws InvalidArgumentException
+     */
+    public function getNextOccurrence(DateTime $current)
+    {
+        // Validate the specific requirements of each interval
+        $interval = $this->getInterval();
+
+        $occurrence = $interval->findNextOccurrence($current, $this);
+
+        // Ensure that the next occurrence is not out of our start -> end period
+        if (!$this->isWithinPeriod($occurrence)) {
+            return false;
+        }
+
+        $this->addOccurrence($occurrence);
+
+        return $occurrence;
+    }
+
+    /**
+     * Check whether an occurrence is within our start -> end period
+     * @param DateTime $occurrence
+     * @return bool
+     */
+    protected function isWithinPeriod(DateTime $occurrence)
+    {
+        $endAfter = $this->getEndAfter();
+
+        // is not valid if we have hit the set occurrences
+        if (is_int($endAfter) && $this->occurrenceCount >= $endAfter) {
+            return false;
+        }
+
+        // Check that the time of the next occurrence isn't beyond our endAfter datetime (if is a datetime)
+        if ($endAfter instanceof DateTime && $occurrence->getTimestamp() > $endAfter->getTimestamp()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Add a datetime to skip within the iterator
+     * @param $skip DateTime|string|array
+     * @return $this
+     */
+    public function skip($skip)
+    {
+        if (!is_array($skip)) {
+            $skip = [$skip];
+        }
+
+        foreach($skip as $occurrence) {
+            if (!$occurrence instanceof DateTime) {
+                $occurrence = new DateTime(strtotime($occurrence));
+            }
+
+            if ($this->shouldSkip($occurrence)) {
+                continue;
+            }
+
+            $this->skip[] = $occurrence->format(self::DATE_TIME_FORMAT);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param $occurrence
+     * @return bool
+     */
+    public function shouldSkip($occurrence)
+    {
+        if ($occurrence instanceof DateTime) {
+            $occurrence = $occurrence->format(self::DATE_TIME_FORMAT);
+        }
+
+        if (!in_array($occurrence, $this->skip)) {
+            return false;
+        }
+
+        return true;
     }
 }
