@@ -1,5 +1,5 @@
 {
-    "name": "jrbarnard/date-interval-iteerator",
+    "name": "jrbarnard/date-interval-iterator",
     "description": "An extendable package for creating iterators afrom custo m intervals",
     "license": "MIT",
     "authors": [
