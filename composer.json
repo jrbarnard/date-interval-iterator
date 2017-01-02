@@ -1,12 +1,27 @@
 {
     "name": "jrbarnard/date-interval-iterator",
-    "description": "An extendable package for creating iterators afrom custo m intervals",
+    "description": "An extensible package for creating iterators from custom intervals",
     "license": "MIT",
+    "keywords": ["PHP","Datetime","Iterator","Date interval"],
+    "homepage": "https://github.com/jrbarnard/date-interval-iterator",
     "authors": [
         {
             "name": "James Barnard",
             "email": "james.r.barnard@gmail.com"
         }
     ],
-    "require": {}
+    "require": {
+        "php": ">=5.5.9"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^4.8",
+        "phpdocumentor/phpdocumentor": "^2.8",
+        "filp/whoops": "^2.1",
+        "symfony/var-dumper": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "DateIntervalIterator\\": "src/"
+        }
+    }
 }
