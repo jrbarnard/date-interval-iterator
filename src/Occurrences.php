@@ -17,6 +17,16 @@ class Occurrences implements \ArrayAccess, \Countable
     protected $occurrences = [];
 
     /**
+     * Occurrences constructor.
+     *
+     * @param array $occurrences
+     */
+    public function __construct(array $occurrences = [])
+    {
+        $this->setOccurrences($occurrences);
+    }
+
+    /**
      * Whether a offset exists
      * @link http://php.net/manual/en/arrayaccess.offsetexists.php
      *
@@ -77,7 +87,11 @@ class Occurrences implements \ArrayAccess, \Countable
             );
         }
 
-        $this->occurrences[$offset] = $value;
+        if (is_null($offset)) {
+            $this->occurrences[] = $value;
+        } else {
+            $this->occurrences[$offset] = $value;
+        }
     }
 
     /**
@@ -127,13 +141,21 @@ class Occurrences implements \ArrayAccess, \Countable
     }
 
     /**
+     * @param array $occurrences
+     */
+    public function setOccurrences(array $occurrences)
+    {
+        $this->occurrences = $occurrences;
+    }
+
+    /**
      * @param DateTime $occurrence
      *
      * @return $this
      */
-    public function push(DateTime $occurrence)
+    public function push($occurrence)
     {
-        $this->occurrences[] = $occurrence;
+        $this[] = $occurrence;
 
         return $this;
     }

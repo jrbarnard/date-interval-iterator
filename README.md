@@ -1,1 +1,3 @@
 # Date Time Interval Iterator #
+
+NB: THIS IS A WORK IN PROGRESS AND IS NOT READY FOR RELEASE.
