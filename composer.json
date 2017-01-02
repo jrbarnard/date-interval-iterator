@@ -1,0 +1,12 @@
+{
+    "name": "jrbarnard/date-interval-iteerator",
+    "description": "An extendable package for creating iterators afrom custo m intervals",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "James Barnard",
+            "email": "james.r.barnard@gmail.com"
+        }
+    ],
+    "require": {}
+}
