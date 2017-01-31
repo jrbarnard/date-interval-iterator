@@ -4,6 +4,7 @@ namespace DateIntervalIterator;
 use DateIntervalIterator\Exceptions\InvalidArgumentException;
 use DateTime;
 use DateIntervalIterator\Intervals\IntervalInterface;
+use Exception;
 
 /**
  * Class DateIntervalIterator
@@ -101,15 +102,62 @@ class DateIntervalIterator implements \Iterator, \Countable
      */
     public function setStart($start)
     {
-        if (!$start instanceof DateTime) {
-            if (!is_int($start)) {
-                $start = strtotime($start);
-            }
-            $start = new DateTime($start);
+        $this->start = $this->parseDateTime($start);
+        return $this;
+    }
+
+    /**
+     * @param $dateTime
+     *
+     * @return DateTime
+     */
+    protected function parseDateTime($dateTime)
+    {
+        // Allow direct pass through
+        if ($this->isValidDateTime($dateTime)) {
+            return $dateTime;
         }
 
-        $this->start = $start;
-        return $this;
+        // Allow timestamps
+        if (is_int($dateTime)) {
+            return (new DateTime())->setTimestamp($dateTime);
+        }
+
+        // Allow string representations of datetime
+        if (is_string($dateTime)) {
+            $convertedDateTime = $this->attemptToConvertStringToDateTime($dateTime);
+            if ($this->isValidDateTime($convertedDateTime)) {
+                return $convertedDateTime;
+            }
+        }
+
+        throw new InvalidArgumentException('Pass a valid DateTime instance, timestamp or date time string');
+    }
+
+    /**
+     * Attempts to convert a string to a datetime instance, if it fails it will return false
+     * If parses fine, will return the datetime instance
+     * @param $string
+     *
+     * @return bool|DateTime
+     */
+    protected function attemptToConvertStringToDateTime($string)
+    {
+        try {
+            return new DateTime($string);
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * @param $dateTime
+     *
+     * @return bool
+     */
+    protected function isValidDateTime($dateTime)
+    {
+        return $dateTime instanceof DateTime;
     }
 
     /**
@@ -119,7 +167,7 @@ class DateIntervalIterator implements \Iterator, \Countable
      */
     public function isValidOccurrences($occurrences)
     {
-        if ($occurrences < 1 || $occurrences > $this->getMaxOccurrences()) {
+        if (!is_int($occurrences) || $occurrences < 1 || $occurrences > $this->getMaxOccurrences()) {
             return false;
         }
 
@@ -144,17 +192,20 @@ class DateIntervalIterator implements \Iterator, \Countable
     public function setEndAfter($endAfter)
     {
         // if is int, check if valid occurrences int, in which case we will set as int
-        if (is_numeric($endAfter) && $this->isValidOccurrences($endAfter)) {
+        if (is_int($endAfter) && $this->isValidOccurrences($endAfter)) {
             $this->end = (int) $endAfter;
             return $this;
         }
 
         // convert to a DateTime instance (handles datetime strings)
         if (is_string($endAfter)) {
-            $endAfter = new DateTime(strtotime($endAfter));
+            $convertedEndAfter = $this->attemptToConvertStringToDateTime($endAfter);
+            if ($this->isValidDateTime($convertedEndAfter)) {
+                $endAfter = $convertedEndAfter;
+            }
         }
 
-        if ($endAfter instanceof DateTime) {
+        if ($this->isValidDateTime($endAfter)) {
             if ($endAfter->getTimestamp() > $this->getStart()->getTimestamp()) {
                 $this->end = $endAfter;
                 return $this;
@@ -186,7 +237,7 @@ class DateIntervalIterator implements \Iterator, \Countable
      */
     public function setMaxOccurrences($occurrences)
     {
-        if ($occurrences < 1) {
+        if (!is_int($occurrences) || $occurrences < 1) {
             throw new InvalidArgumentException('You must pass a max occurrences of more than 0');
         }
 
@@ -407,7 +458,7 @@ class DateIntervalIterator implements \Iterator, \Countable
         }
 
         // Check that the time of the next occurrence isn't beyond our endAfter datetime (if is a datetime)
-        if ($endAfter instanceof DateTime && $occurrence->getTimestamp() > $endAfter->getTimestamp()) {
+        if ($this->isValidDateTime($endAfter) && $occurrence->getTimestamp() > $endAfter->getTimestamp()) {
             return false;
         }
 
@@ -426,7 +477,8 @@ class DateIntervalIterator implements \Iterator, \Countable
         }
 
         foreach($skip as $occurrence) {
-            if (!$occurrence instanceof DateTime) {
+            // TODO: More defensive
+            if (!$this->isValidDateTime($occurrence)) {
                 $occurrence = new DateTime(strtotime($occurrence));
             }
 
@@ -446,7 +498,7 @@ class DateIntervalIterator implements \Iterator, \Countable
      */
     public function shouldSkip($occurrence)
     {
-        if ($occurrence instanceof DateTime) {
+        if ($this->isValidDateTime($occurrence)) {
             $occurrence = $occurrence->format(self::DATE_TIME_FORMAT);
         }
 

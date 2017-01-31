@@ -7,3 +7,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 ### Added
 - Base src files, composer, git config, readme and changelog files.
+- Occurrences collection class and tests
