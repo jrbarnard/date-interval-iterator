@@ -125,14 +125,29 @@ class DateIntervalIterator implements \Iterator, \Countable
 
         // Allow string representations of datetime
         if (is_string($dateTime)) {
-            try {
-                return new DateTime($dateTime);
-            } catch (Exception $e) {
-                // Don't do anything, we throw at the bottom
+            $convertedDateTime = $this->attemptToConvertStringToDateTime($dateTime);
+            if ($this->isValidDateTime($convertedDateTime)) {
+                return $convertedDateTime;
             }
         }
 
         throw new InvalidArgumentException('Pass a valid DateTime instance, timestamp or date time string');
+    }
+
+    /**
+     * Attempts to convert a string to a datetime instance, if it fails it will return false
+     * If parses fine, will return the datetime instance
+     * @param $string
+     *
+     * @return bool|DateTime
+     */
+    protected function attemptToConvertStringToDateTime($string)
+    {
+        try {
+            return new DateTime($string);
+        } catch (Exception $e) {
+            return false;
+        }
     }
 
     /**
@@ -177,14 +192,17 @@ class DateIntervalIterator implements \Iterator, \Countable
     public function setEndAfter($endAfter)
     {
         // if is int, check if valid occurrences int, in which case we will set as int
-        if (is_numeric($endAfter) && $this->isValidOccurrences($endAfter)) {
+        if (is_int($endAfter) && $this->isValidOccurrences($endAfter)) {
             $this->end = (int) $endAfter;
             return $this;
         }
 
         // convert to a DateTime instance (handles datetime strings)
         if (is_string($endAfter)) {
-            $endAfter = new DateTime(strtotime($endAfter));
+            $convertedEndAfter = $this->attemptToConvertStringToDateTime($endAfter);
+            if ($this->isValidDateTime($convertedEndAfter)) {
+                $endAfter = $convertedEndAfter;
+            }
         }
 
         if ($this->isValidDateTime($endAfter)) {
@@ -459,6 +477,7 @@ class DateIntervalIterator implements \Iterator, \Countable
         }
 
         foreach($skip as $occurrence) {
+            // TODO: More defensive
             if (!$this->isValidDateTime($occurrence)) {
                 $occurrence = new DateTime(strtotime($occurrence));
             }
