@@ -35,7 +35,90 @@ class IteratorTest extends PHPUnit_Framework_TestCase
     // - isValidOccurrences will return false if non int passed or int out of range of 1 - max, true if in range - done
     //
     // ITERATOR SPECIFIC TESTS
+    // - current will return the current point within the iterator - done
+    // - key will point to the current key within the iterator - done
+    // - count will return the total number of occurrences - done
+    // - valid will return false if the total number of occurrences is greater than max occurrences or if the key is already set - done
+    // - iteration will cache within iterator after running
+    // - iteration will cache in parts in iterator not run all the way through
+    // - total number of occurrences will never exceed max occurrences, whether end after is set to an int or datetime
+    // - iterator will stop once reached datetime of end after, max occurrences or number of occurrences
+    // - BUGFIX: setting max occurrences lower after initial iteration will stop iteration from working
+    // - Can up max occurrences after initial iteration and will continue to get additional occurrences
     // - looping, getting etc
+
+    /** @test */
+    public function valid_will_return_boolean_based_on_if_current_key_is_valid()
+    {
+        $datetime = new DateTime();
+        $interval = new TenDayInterval();
+        $endAfter = 18;
+        $iterator = $this->generateIterator($datetime, $interval, $endAfter);
+
+        // Will return false at start as occurrence hasn't yet been set
+        $this->assertFalse($iterator->valid());
+
+        $iterator->count();
+
+        $this->assertFalse($iterator->valid());
+
+        $iterator->rewind();
+        $this->assertTrue($iterator->valid());
+        // TODO: This shows a bug where after setting occurrences lower than the amount already got, iteration will fail
+        // because the count exceeds the max
+        $iterator->setMaxOccurrences(1);
+        $this->assertFalse($iterator->valid());
+    }
+
+    /** @test */
+    public function count_will_return_the_total_number_of_occurrences()
+    {
+        $datetime = new DateTime();
+        $interval = new TenDayInterval();
+        $endAfter = 18;
+        $iterator = $this->generateIterator($datetime, $interval, $endAfter);
+
+        $this->assertSame($endAfter, $iterator->count());
+
+        // Can also use count(), re build iterator before
+        $iterator = $this->generateIterator($datetime, $interval, $endAfter);
+        $this->assertSame($endAfter, count($iterator));
+    }
+
+    /** @test */
+    public function current_will_return_the_current_point_within_the_iterator()
+    {
+        $datetime = new DateTime();
+        $interval = new TenDayInterval();
+        $endAfter = 10;
+        $iterator = $this->generateIterator($datetime, $interval, $endAfter);
+
+        $this->assertNull($iterator->key());
+
+        foreach($iterator as $occurrence) {
+            $this->assertInstanceOf(DateTime::class, $occurrence);
+
+            // Break after first iteration
+            break;
+        }
+
+        // Key should be 1
+        // Current should be date time plus 10 days
+        $this->assertSame(0, $iterator->key());
+        $this->assertInstanceOf(DateTime::class, $iterator->current());
+        $this->assertSame((clone $datetime)->add(new DateInterval('P10D'))->getTimestamp(), $iterator->current()->getTimestamp());
+
+        // Start iterator again to check currents and keys are correct
+        $count = 0;
+        foreach($iterator as $key => $occurrence) {
+            $this->assertInstanceOf(DateTime::class, $iterator->current());
+
+            $this->assertSame($key, $iterator->key());
+            $this->assertSame($count, $iterator->key());
+
+            $count++;
+        }
+    }
 
     /**
      * @dataProvider invalidMaxOccurrences
@@ -561,5 +644,24 @@ class SetIntervalTestInterval implements IntervalInterface
     public function findNextOccurrence(DateTime $current, DateIntervalIterator $iterator)
     {
         return $current;
+    }
+}
+
+/**
+ * Class TenDayInterval
+ */
+class TenDayInterval implements IntervalInterface
+{
+    /**
+     * Method that finds the next occurrence of the interval from current
+     *
+     * @param DateTime $current
+     * @param DateIntervalIterator $iterator
+     *
+     * @return mixed
+     */
+    public function findNextOccurrence(DateTime $current, DateIntervalIterator $iterator)
+    {
+        return (clone $current)->add(new DateInterval('P10D'));
     }
 }
