@@ -119,7 +119,7 @@ class DateIntervalIterator implements \Iterator, \Countable
      */
     public function isValidOccurrences($occurrences)
     {
-        if ($occurrences < 1 || $occurrences > $this->getMaxOccurrences()) {
+        if (!is_int($occurrences) || $occurrences < 1 || $occurrences > $this->getMaxOccurrences()) {
             return false;
         }
 
@@ -186,7 +186,7 @@ class DateIntervalIterator implements \Iterator, \Countable
      */
     public function setMaxOccurrences($occurrences)
     {
-        if ($occurrences < 1) {
+        if (!is_int($occurrences) || $occurrences < 1) {
             throw new InvalidArgumentException('You must pass a max occurrences of more than 0');
         }
 
