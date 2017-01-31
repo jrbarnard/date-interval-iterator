@@ -1,5 +1,6 @@
 <?php
 use DateIntervalIterator\DateIntervalIterator;
+use DateIntervalIterator\Intervals\IntervalInterface;
 
 /**
  * Class IteratorTest
@@ -7,10 +8,10 @@ use DateIntervalIterator\DateIntervalIterator;
 class IteratorTest extends PHPUnit_Framework_TestCase
 {
     // Tests:
-    // - constructor first argument expects a start date, either datetime, string or timestamp
-    //  - Same as setStart method
-    // - Second parameter must implement the IntervalInterface
-    // - Third parameter (setEndAfter) should be int for number of occurrences, string or date time
+    // - constructor will take start, interval and end and pass off to relevant methods - done
+    // - setStart expects a start date, either datetime, string or timestamp
+    // - setInterval accepts parameter that must implement IntervalInterface
+    // - setEndAfter should accept int for number of occurrences, string or date time
     //  - If int should be within $maxOccurrences
     //  - If string / date time should be after the start date time
     // - setEndAfter, setStart and setInterval should return Iterator
@@ -24,6 +25,34 @@ class IteratorTest extends PHPUnit_Framework_TestCase
     //
     // ITERATOR SPECIFIC TESTS
     // - looping, getting etc
+
+    /** @test */
+    public function setStart_will_accept_valid_date_time_instance_date_string_or_timestamp()
+    {
+        $validDateTime = new DateTime();
+        $timestamp = $validDateTime->getTimestamp();
+        $dateTimeString = $validDateTime->format('Y-m-d H:i:s');
+
+        // Check they are the types we want to check for
+        $this->assertTrue(is_string($dateTimeString));
+        $this->assertTrue(is_int($timestamp));
+        $this->assertInstanceOf(DateTime::class, $validDateTime);
+
+        // Initialise the iterator
+        $originalTimestamp = strtotime("2016-12-12");
+        $iterator = $this->generateIterator($originalTimestamp);
+
+        $this->assertInstanceOf(DateIntervalIterator::class, $iterator);
+
+        // Ensure the original passed and what we will be setting aren't the same, otherwise we may get a false positive
+        $this->assertNotSame($originalTimestamp, $iterator->getStart()->getTimestamp());
+
+        // Now set using a standard datetime instance
+        $iterator->setStart($validDateTime);
+        $this->assertSame($validDateTime->getTimestamp(), $iterator->getStart()->getTimestamp());
+
+        // TODO: CONTINUE
+    }
 
     /** @test */
     public function iterator_takes_start_interval_and_end_after_in_constructor()
@@ -62,12 +91,40 @@ class IteratorTest extends PHPUnit_Framework_TestCase
         $constructor = $reflectedClass->getConstructor();
         $constructor->invoke($mock, $dateTime, $interval, $endAfter);
     }
+
+    /**
+     * HELPERS / PROVIDERS
+     */
+
+    /**
+     * @param null $start
+     * @param null $interval
+     * @param null $endAfter
+     *
+     * @return DateIntervalIterator
+     */
+    public function generateIterator($start = null, $interval = null, $endAfter = null)
+    {
+        if (!$interval instanceof IntervalInterface) {
+            $interval = new TestInterval();
+        }
+
+        if (is_null($start)) {
+            $start = new DateTime();
+        }
+
+        if (is_null($endAfter)) {
+            $endAfter = 10;
+        }
+
+        return new DateIntervalIterator($start, $interval, $endAfter);
+    }
 }
 
 /**
  * Class TestInterval
  */
-class TestInterval implements \DateIntervalIterator\Intervals\IntervalInterface
+class TestInterval implements IntervalInterface
 {
 
     /**
