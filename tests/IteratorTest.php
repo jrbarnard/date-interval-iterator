@@ -45,7 +45,11 @@ class IteratorTest extends PHPUnit_Framework_TestCase
     // - iterator will stop once reached datetime of end after, max occurrences or number of occurrences
     // - BUGFIX: setting max occurrences lower after initial iteration will stop iteration from working
     // - Can up max occurrences after initial iteration and will continue to get additional occurrences
-    // - looping, getting etc
+    // - getNextOccurrence
+    // - isWithinPeriod
+    // - next
+    // - skip
+    // - shouldSkip
 
     /** @test */
     public function valid_will_return_boolean_based_on_if_current_key_is_valid()
