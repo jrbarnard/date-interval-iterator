@@ -22,5 +22,9 @@
         "psr-4": {
             "DateIntervalIterator\\": "src/"
         }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "coverage": "phpunit --coverage-html ./tests/report"
     }
 }

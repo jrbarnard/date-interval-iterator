@@ -79,6 +79,21 @@ class OccurrencesTest extends PHPUnit_Framework_TestCase
     }
 
     /** @test */
+    public function can_isset_check_on_occurrences()
+    {
+        $dateTimeOne = new DateTime();
+        $dateTimeTwo = (new DateTime())->modify('+1 month');
+        $occurrences = new Occurrences([
+            $dateTimeOne,
+            $dateTimeTwo
+        ]);
+
+        $this->assertTrue(isset($occurrences[0]));
+        $this->assertTrue(isset($occurrences[1]));
+        $this->assertFalse(isset($occurrences[2]));
+    }
+
+    /** @test */
     public function push_will_add_to_end_of_occurrence_array_and_return_object()
     {
         $occurrences = new Occurrences();
@@ -121,6 +136,18 @@ class OccurrencesTest extends PHPUnit_Framework_TestCase
         // Attempt to unset
         unset($occurrences[1]);
         $this->assertSame(1, $occurrences->count());
+    }
+
+    /** @test */
+    public function can_get_occurrence()
+    {
+        $dateTimeOne = new DateTime();
+        $dateTimeTwo = new DateTime();
+        $dateTimeThree = (new DateTime())->modify('+1 month');
+
+        $occurrences = new Occurrences([$dateTimeOne, $dateTimeTwo, $dateTimeThree]);
+        $this->assertEquals($dateTimeOne, $occurrences->getOccurrence(0));
+        $this->assertNotEquals($dateTimeThree, $occurrences->getOccurrence(0));
     }
 
     /**
