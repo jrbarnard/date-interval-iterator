@@ -431,7 +431,14 @@ class DateIntervalIterator implements \Iterator, \Countable
         // Validate the specific requirements of each interval
         $interval = $this->getInterval();
 
-        $occurrence = $interval->findNextOccurrence($current, $this);
+        $running = true;
+        $occurrence = $current;
+        while($running === true) {
+            $occurrence = $interval->findNextOccurrence($occurrence, $this);
+            if (!$this->shouldSkip($occurrence)) {
+                $running = false;
+            }
+        }
 
         // Ensure that the next occurrence is not out of our start -> end period
         if (!$this->isWithinPeriod($occurrence)) {
@@ -477,15 +484,14 @@ class DateIntervalIterator implements \Iterator, \Countable
         }
 
         foreach($skip as $occurrence) {
-            // TODO: More defensive
-            if (!$this->isValidDateTime($occurrence)) {
-                $occurrence = new DateTime(strtotime($occurrence));
-            }
+            $occurrence = $this->parseDateTime($occurrence);
 
+            // Ignore if already skipping
             if ($this->shouldSkip($occurrence)) {
                 continue;
             }
 
+            // Add datetime to skip
             $this->skip[] = $occurrence->format(self::DATE_TIME_FORMAT);
         }
 
