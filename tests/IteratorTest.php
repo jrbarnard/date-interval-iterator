@@ -14,6 +14,11 @@ class IteratorTest extends PHPUnit_Framework_TestCase
      */
     const ITERATOR_CLASS = DateIntervalIterator::class;
 
+    /**
+     * General format we will use
+     */
+    const DATE_TIME_FORMAT = 'Y-m-d H:i:s';
+
     // Tests:
     // - constructor will take start, interval and end and pass off to relevant methods - done
     // - setStart expects a start date, either datetime, string or timestamp - done
@@ -39,13 +44,478 @@ class IteratorTest extends PHPUnit_Framework_TestCase
     // - key will point to the current key within the iterator - done
     // - count will return the total number of occurrences - done
     // - valid will return false if the total number of occurrences is greater than max occurrences or if the key is already set - done
-    // - iteration will cache within iterator after running
-    // - iteration will cache in parts in iterator not run all the way through
-    // - total number of occurrences will never exceed max occurrences, whether end after is set to an int or datetime
-    // - iterator will stop once reached datetime of end after, max occurrences or number of occurrences
+    // - iteration will cache within iterator after running - done
+    // - iteration will cache in parts in iterator not run all the way through - done
+    // - total number of occurrences will never exceed max occurrences, whether end after is set to an int or datetime - done
+    // - iterator will stop once reached datetime of end after, max occurrences or number of occurrences - done
+    // - Can up max occurrences after initial iteration and will continue to get additional occurrences - done
+    // - Can set date time strings, date time instances to skip and will skip when iteration - done
+    // - Can check if a datetime string or datetime should be skipped - done
+    // - Wont add to skip if already skipping - done
+    // - Can get occurrence by key using method - done
+    // - Get first occurrence will get already set if set already, otherwise will get next - done
     // - BUGFIX: setting max occurrences lower after initial iteration will stop iteration from working
-    // - Can up max occurrences after initial iteration and will continue to get additional occurrences
-    // - looping, getting etc
+    // - Will take into account time
+    // - Will wrap months
+    // - getNextOccurrence
+    // - isWithinPeriod
+    // - next
+
+    /** @test */
+    public function can_get_first_occurrence_will_get_if_already_got()
+    {
+        $endAfter = 5;
+        $start = new DateTime('2014-06-12 12:03:30');
+        $interval = new OneDayInterval();
+
+        $iterator = $this->generateIterator($start, $interval, $endAfter);
+
+        count($iterator);
+
+        $mock = $this->getMockBuilder(OneDayInterval::class)
+            ->setMethods([
+                'findNextOccurrence'
+            ])
+            ->getMockForAbstractClass();
+
+        $iterator->setInterval($mock);
+
+        $class = new ReflectionObject($iterator);
+        $method = $class->getMethod('getFirstOccurrence');
+        $method->setAccessible(true);
+
+        // Check we never go into the interval
+        $mock->expects($this->never())
+            ->method('findNextOccurrence');
+
+        $method->invoke($iterator);
+    }
+
+    /** @test */
+    public function can_get_first_occurrence_will_get_next_if_not_yet_got()
+    {
+        $endAfter = 5;
+        $start = new DateTime('2014-06-12 12:03:30');
+
+        $mock = $this->getMockBuilder(OneDayInterval::class)
+            ->setMethods([
+                'findNextOccurrence'
+            ])
+            ->getMockForAbstractClass();
+
+        $iterator = $this->generateIterator($start, $mock, $endAfter);
+
+        $class = new ReflectionObject($iterator);
+        $method = $class->getMethod('getFirstOccurrence');
+        $method->setAccessible(true);
+
+        // Not yet iterated, check triggers next occurrence method within interval
+        $mock->expects($this->once())
+            ->method('findNextOccurrence')
+            ->willReturn(new DateTime('2014-06-13 12:03:30'));
+
+        $method->invoke($iterator);
+
+//        // Now iterate
+//        count($iterator);
+//
+//        $this->assertEquals('2014-06-14 12:03:30', $method->invoke($iterator, 1)->format(self::DATE_TIME_FORMAT));
+    }
+
+    /** @test */
+    public function can_get_occurrence_by_key()
+    {
+        $endAfter = 5;
+        $start = new DateTime('2014-06-12 12:03:30');
+        $interval = new OneDayInterval();
+
+        $iterator = $this->generateIterator($start, $interval, $endAfter);
+
+        $class = new ReflectionObject($iterator);
+        $method = $class->getMethod('getOccurrence');
+        $method->setAccessible(true);
+
+        count($iterator);
+
+        $this->assertEquals('2014-06-14 12:03:30', $method->invoke($iterator, 1)->format(self::DATE_TIME_FORMAT));
+    }
+
+    /** @test */
+    public function wont_add_to_skip_if_already_skipping()
+    {
+        $endAfter = 5;
+        $start = new DateTime('2014-06-12 12:03:30');
+        $interval = new OneDayInterval();
+
+        $iterator = $this->generateIterator($start, $interval, $endAfter);
+
+        $class = new ReflectionObject($iterator);
+        $property = $class->getProperty('skip');
+        $property->setAccessible(true);
+
+        $this->assertEmpty($property->getValue($iterator));
+
+        $iterator->skip(new DateTime('2014-06-15 12:03:30'));
+
+        $this->assertCount(1, $property->getValue($iterator));
+
+        $iterator->skip(new DateTime('2014-06-15 12:03:30'));
+
+        $this->assertCount(1, $property->getValue($iterator));
+    }
+
+    /** @test */
+    public function can_check_if_datetime_should_be_skipped()
+    {
+        $endAfter = 5;
+        $start = new DateTime('2014-06-12 12:03:30');
+        $interval = new OneDayInterval();
+
+        $iterator = $this->generateIterator($start, $interval, $endAfter);
+
+        $skip = new DateTime('2014-06-15 12:03:30');
+
+        $this->assertFalse($iterator->shouldSkip($skip));
+        $this->assertFalse($iterator->shouldSkip($skip->format(self::DATE_TIME_FORMAT)));
+
+        $iterator->skip($skip);
+
+        $this->assertTrue($iterator->shouldSkip($skip));
+        $this->assertTrue($iterator->shouldSkip($skip->format(self::DATE_TIME_FORMAT)));
+    }
+
+    /** @test */
+    public function can_set_skip_multiple_times_will_add_on_and_it_will_skip_those_occurrences()
+    {
+        $endAfter = 5;
+        $start = new DateTime('2014-06-12 12:03:30');
+        $interval = new OneDayInterval();
+
+        $iterator = $this->generateIterator($start, $interval, $endAfter);
+
+        $iterator->skip(new DateTime('2014-06-15 12:03:30'));
+        $iterator->skip(new DateTime('2014-06-17 12:03:30'));
+
+        $expectedResults = [
+            '2014-06-13 12:03:30',
+            '2014-06-14 12:03:30',
+//            '2014-06-15 12:03:30',
+            '2014-06-16 12:03:30',
+//            '2014-06-17 12:03:30',
+            '2014-06-18 12:03:30',
+            '2014-06-19 12:03:30',
+        ];
+
+        $count = 0;
+        foreach($iterator as $occurrence) {
+            $this->assertSame($expectedResults[$count], $occurrence->format(self::DATE_TIME_FORMAT));
+            $count++;
+        }
+
+        $this->assertEquals($endAfter, $count);
+    }
+
+    /** @test */
+    public function can_set_skip_array_with_datetime_and_it_will_skip_those_occurrences()
+    {
+        $endAfter = 6;
+        $start = new DateTime('2014-06-12 12:03:30');
+        $interval = new OneDayInterval();
+
+        $iterator = $this->generateIterator($start, $interval, $endAfter);
+
+        $iterator->skip([
+            new DateTime('2014-06-15 12:03:30'),
+            new DateTime('2014-06-17 12:03:30')
+        ]);
+
+        $expectedResults = [
+            '2014-06-13 12:03:30',
+            '2014-06-14 12:03:30',
+//            '2014-06-15 12:03:30',
+            '2014-06-16 12:03:30',
+//            '2014-06-17 12:03:30',
+            '2014-06-18 12:03:30',
+            '2014-06-19 12:03:30',
+            '2014-06-20 12:03:30',
+        ];
+
+        $count = 0;
+        foreach($iterator as $occurrence) {
+            $this->assertSame($expectedResults[$count], $occurrence->format(self::DATE_TIME_FORMAT));
+            $count++;
+        }
+
+        $this->assertEquals($endAfter, $count);
+    }
+
+    /** @test */
+    public function can_set_skip_with_datetime_and_it_will_skip_those_occurrences()
+    {
+        $endAfter = 6;
+        $start = new DateTime('2014-06-12 12:03:30');
+        $interval = new OneDayInterval();
+
+        $iterator = $this->generateIterator($start, $interval, $endAfter);
+
+        $iterator->skip(new DateTime('2014-06-14 12:03:30'));
+
+        $expectedResults = [
+            '2014-06-13 12:03:30',
+//            '2014-06-14 12:03:30',
+            '2014-06-15 12:03:30',
+            '2014-06-16 12:03:30',
+            '2014-06-17 12:03:30',
+            '2014-06-18 12:03:30',
+            '2014-06-19 12:03:30',
+            '2014-06-23 12:03:30',
+        ];
+
+        $count = 0;
+        foreach($iterator as $occurrence) {
+            $this->assertSame($expectedResults[$count], $occurrence->format(self::DATE_TIME_FORMAT));
+            $count++;
+        }
+
+        $this->assertEquals($endAfter, $count);
+    }
+
+    /** @test */
+    public function can_set_skip_array_and_it_will_skip_those_occurrences()
+    {
+        $endAfter = 6;
+        $start = new DateTime('2014-06-12 12:03:30');
+        $interval = new OneDayInterval();
+
+        $iterator = $this->generateIterator($start, $interval, $endAfter);
+
+        $iterator->skip(['2014-06-15 12:03:30', '2014-06-17 12:03:30']);
+
+        $expectedResults = [
+            '2014-06-13 12:03:30',
+            '2014-06-14 12:03:30',
+//            '2014-06-15 12:03:30',
+            '2014-06-16 12:03:30',
+//            '2014-06-17 12:03:30',
+            '2014-06-18 12:03:30',
+            '2014-06-19 12:03:30',
+            '2014-06-20 12:03:30',
+        ];
+
+        $count = 0;
+        foreach($iterator as $occurrence) {
+            $this->assertSame($expectedResults[$count], $occurrence->format(self::DATE_TIME_FORMAT));
+            $count++;
+        }
+
+        $this->assertEquals($endAfter, $count);
+    }
+
+    /** @test */
+    public function can_set_skip_and_it_will_skip_those_occurrences()
+    {
+        $endAfter = 6;
+        $start = new DateTime('2014-06-12 12:03:30');
+        $interval = new OneDayInterval();
+
+        $iterator = $this->generateIterator($start, $interval, $endAfter);
+
+        $iterator->skip('2014-06-14 12:03:30');
+
+        $expectedResults = [
+            '2014-06-13 12:03:30',
+//            '2014-06-14 12:03:30',
+            '2014-06-15 12:03:30',
+            '2014-06-16 12:03:30',
+            '2014-06-17 12:03:30',
+            '2014-06-18 12:03:30',
+            '2014-06-19 12:03:30',
+        ];
+
+        $count = 0;
+        foreach($iterator as $occurrence) {
+            $this->assertSame($expectedResults[$count], $occurrence->format(self::DATE_TIME_FORMAT));
+            $count++;
+        }
+
+        $this->assertEquals($endAfter, $count);
+    }
+
+    /** @test */
+    public function can_up_max_occurrences_after_initial_iteration_and_will_continue_to_get_more()
+    {
+        $datetime = new DateTime('2016-02-12');
+        $interval = new TenDayInterval();
+        $endAfter = '2016-07-14';
+
+        $iterator = $this->generateIterator($datetime, $interval, $endAfter);
+        $iterator->setEndAfter(9);
+
+        $count = 0;
+        foreach($iterator as $occurrence) {
+            $count++;
+        }
+
+        $this->assertSame(9, $count);
+
+        // Up the end after
+        $iterator->setEndAfter($newEndAfter = 25);
+
+        $count = 0;
+        foreach($iterator as $occurrence) {
+            $count++;
+        }
+
+        $this->assertSame($newEndAfter, $count);
+    }
+
+    /** @test */
+    public function will_stop_running_after_max_occurrences_if_less_than_end_after()
+    {
+        $datetime = new DateTime('2016-02-12');
+        $interval = new TenDayInterval();
+        $endAfter = '2016-07-14';
+
+        $iterator = $this->generateIterator($datetime, $interval, $endAfter);
+        $iterator->setEndAfter(9);
+
+        $count = 0;
+        foreach($iterator as $occurrence) {
+            $count++;
+        }
+
+        $this->assertSame(9, $count);
+    }
+
+    /** @test */
+    public function will_stop_running_after_date_end_after()
+    {
+        $datetime = new DateTime('2016-02-12');
+        $interval = new TenDayInterval();
+        $endAfter = '2016-07-14';
+
+        $iterator = $this->generateIterator($datetime, $interval, $endAfter);
+
+        $count = 0;
+        foreach($iterator as $occurrence) {
+            $count++;
+        }
+
+        $this->assertSame(15, $count);
+    }
+
+    /** @test */
+    public function will_stop_running_after_x_end_after()
+    {
+        $datetime = new DateTime('2016-02-12');
+        $interval = new TenDayInterval();
+        $endAfter = 19;
+
+        $iterator = $this->generateIterator($datetime, $interval, $endAfter);
+
+        $count = 0;
+        foreach($iterator as $occurrence) {
+            $count++;
+        }
+
+        $this->assertSame($endAfter, $count);
+    }
+
+    /** @test */
+    public function iterator_will_cache_part_if_not_looped_all_through()
+    {
+        $datetime = new DateTime('2012-02-01');
+        $interval = new TenDayInterval();
+        $endAfter = 3;
+
+        $expected = [
+            '2012-02-11',
+            '2012-02-21',
+            '2012-03-02'
+        ];
+
+        $iterator = $this->generateIterator($datetime, $interval, $endAfter);
+
+        $class = new ReflectionObject($iterator);
+        $property = $class->getProperty('occurrences');
+        $property->setAccessible(true);
+
+        $this->assertEmpty($property->getValue($iterator));
+
+        // Loop only first
+        $firstOccurrence = null;
+        foreach($iterator as $occurrence) {
+            $firstOccurrence = $occurrence;
+            break;
+        }
+
+        $this->assertCount(1, $property->getValue($iterator));
+        $this->assertEquals($expected[0], $firstOccurrence->format('Y-m-d'));
+
+        // Now iterate rest and check stores normally
+        $count = 0;
+        foreach($iterator as $occurrence) {
+            $this->assertEquals($expected[$count], $occurrence->format('Y-m-d'));
+            $count++;
+        }
+
+        // Check cached
+        $this->assertCount(count($expected), $property->getValue($iterator));
+
+        $mock = $this->getMockBuilder(TenDayInterval::class)
+            ->setMethods([
+                'findNextOccurrence'
+            ])
+            ->getMockForAbstractClass();
+
+        // Will call once at end to verify out of range
+        $mock->expects($this->once())
+            ->method('findNextOccurrence')
+            ->willReturn(new DateTime('2012-03-12'));
+
+        $iterator->setInterval($mock);
+
+        foreach($iterator as $occurrence) {
+            // Iterating
+        }
+    }
+
+    /** @test */
+    public function after_iterating_will_have_cached_date_times()
+    {
+        $datetime = new DateTime('2012-02-01');
+        $interval = new TenDayInterval();
+        $endAfter = 3;
+
+        $expected = [
+            '2012-02-11',
+            '2012-02-21',
+            '2012-03-02'
+        ];
+
+        $iterator = $this->generateIterator($datetime, $interval, $endAfter);
+
+        $class = new ReflectionObject($iterator);
+        $property = $class->getProperty('occurrences');
+        $property->setAccessible(true);
+
+        $this->assertEmpty($property->getValue($iterator));
+
+        // Now iterate and then check occurrences is stored
+        count($iterator);
+
+        $occurrences = $property->getValue($iterator);
+        $this->assertNotEmpty($occurrences);
+
+        // Check occurrences match expected
+        $expectedCount = count($expected);
+        $this->assertCount($expectedCount, $occurrences);
+        for ($i = 0; $i < $expectedCount; $i++) {
+            $this->assertEquals($expected[$i], $occurrences[$i]->format('Y-m-d'));
+        }
+
+        // If iterate again, check doesn't call get next occurrence
+    }
 
     /** @test */
     public function valid_will_return_boolean_based_on_if_current_key_is_valid()
@@ -663,5 +1133,24 @@ class TenDayInterval implements IntervalInterface
     public function findNextOccurrence(DateTime $current, DateIntervalIterator $iterator)
     {
         return (clone $current)->add(new DateInterval('P10D'));
+    }
+}
+
+/**
+ * Class OneDayInterval
+ */
+class OneDayInterval implements IntervalInterface
+{
+    /**
+     * Method that finds the next occurrence of the interval from current
+     *
+     * @param DateTime $current
+     * @param DateIntervalIterator $iterator
+     *
+     * @return mixed
+     */
+    public function findNextOccurrence(DateTime $current, DateIntervalIterator $iterator)
+    {
+        return (clone $current)->add(new DateInterval('P1D'));
     }
 }
