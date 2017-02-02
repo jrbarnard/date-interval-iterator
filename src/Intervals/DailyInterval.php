@@ -74,4 +74,3 @@ class DailyInterval implements IntervalInterface
         return (clone $current)->add(new DateInterval('P' . $this->getNumberOfDays() . 'D'));
     }
 }
-
