@@ -36,11 +36,19 @@ class DailyInterval implements IntervalInterface
     {
         if (!is_numeric($numberOfDays)) {
             throw new InvalidArgumentException(
-                'You must pass a valid integer as the number of days to the interval.'
+                'You must pass a numerical value as the number of days to the interval.'
             );
         }
 
-        $this->numberOfDays = (int) $numberOfDays;
+        $numberOfDays = (int) $numberOfDays;
+
+        if ($numberOfDays < 1) {
+            throw new InvalidArgumentException(
+                'You must pass a number greater than 1 as the number of days to the interval.'
+            );
+        }
+
+        $this->numberOfDays = $numberOfDays;
 
         return $this;
     }
