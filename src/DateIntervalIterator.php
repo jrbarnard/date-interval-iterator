@@ -353,7 +353,7 @@ class DateIntervalIterator implements Iterator, Countable
     public function count()
     {
         if ($this->occurrenceCount === 0) {
-            foreach($this as $occurrence) {
+            foreach ($this as $occurrence) {
                 // do nothing, just iterating all occurrences for count
             }
         }
@@ -435,7 +435,7 @@ class DateIntervalIterator implements Iterator, Countable
 
         $running = true;
         $occurrence = $current;
-        while($running === true) {
+        while ($running === true) {
             $occurrence = $interval->findNextOccurrence($occurrence, $this);
             if (!$this->shouldSkip($occurrence)) {
                 $running = false;
@@ -485,7 +485,7 @@ class DateIntervalIterator implements Iterator, Countable
             $skip = [$skip];
         }
 
-        foreach($skip as $occurrence) {
+        foreach ($skip as $occurrence) {
             $occurrence = $this->parseDateTime($occurrence);
 
             // Ignore if already skipping
