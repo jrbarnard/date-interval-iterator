@@ -1,10 +1,12 @@
 <?php
 namespace DateIntervalIterator;
 
-use DateIntervalIterator\Exceptions\InvalidArgumentException;
 use DateTime;
-use DateIntervalIterator\Intervals\IntervalInterface;
+use Iterator;
+use Countable;
 use Exception;
+use DateIntervalIterator\Intervals\IntervalInterface;
+use DateIntervalIterator\Exceptions\InvalidArgumentException;
 
 /**
  * Class DateIntervalIterator
@@ -12,7 +14,7 @@ use Exception;
  * For instance you can choose to get the 2nd Mondays, Wednesdays and Fridays of each month from now up to 100 occurrences.
  * @package DateIntervalIterator
  */
-class DateIntervalIterator implements \Iterator, \Countable
+class DateIntervalIterator implements Iterator, Countable
 {
     /**
      * The format we want the date times as

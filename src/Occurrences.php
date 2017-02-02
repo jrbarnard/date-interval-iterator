@@ -1,15 +1,17 @@
 <?php
 namespace DateIntervalIterator;
 
-use DateIntervalIterator\Exceptions\InvalidArgumentException;
 use DateTime;
+use Countable;
+use ArrayAccess;
+use DateIntervalIterator\Exceptions\InvalidArgumentException;
 
 /**
  * Class Occurrences
  * A wrapper to store the found occurrences in
  * @package DateIntervalIterator
  */
-class Occurrences implements \ArrayAccess, \Countable
+class Occurrences implements ArrayAccess, Countable
 {
     /**
      * @var array
