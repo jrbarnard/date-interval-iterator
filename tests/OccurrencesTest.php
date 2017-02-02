@@ -1,7 +1,7 @@
 <?php
 
-use DateIntervalIterator\Occurrences;
-use DateIntervalIterator\Exceptions\InvalidArgumentException;
+use JRBarnard\DateIntervalIterator\Occurrences;
+use JRBarnard\DateIntervalIterator\Exceptions\InvalidArgumentException;
 
 /**
  * Class OccurrencesTest

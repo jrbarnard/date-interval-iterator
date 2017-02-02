@@ -19,12 +19,15 @@
         "mockery/mockery": "^0.9.7"
     },
     "autoload": {
+        "classmap": [
+            "tests/TestCase.php"
+        ],
         "psr-4": {
-            "DateIntervalIterator\\": "src/"
+            "JRBarnard\\DateIntervalIterator\\": "src/"
         }
     },
     "scripts": {
-        "test": "phpunit",
+        "test": "phpunit --colors=always",
         "coverage": "phpunit --coverage-html ./tests/report"
     }
 }

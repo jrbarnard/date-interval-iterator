@@ -1,18 +1,20 @@
 <?php
-namespace DateIntervalIterator;
+namespace JRBarnard\DateIntervalIterator;
 
-use DateIntervalIterator\Exceptions\InvalidArgumentException;
 use DateTime;
-use DateIntervalIterator\Intervals\IntervalInterface;
+use Iterator;
+use Countable;
 use Exception;
+use JRBarnard\DateIntervalIterator\Intervals\IntervalInterface;
+use JRBarnard\DateIntervalIterator\Exceptions\InvalidArgumentException;
 
 /**
  * Class DateIntervalIterator
  * This class allows you to generate a time period with a specified interval that you can then iterate over.
  * For instance you can choose to get the 2nd Mondays, Wednesdays and Fridays of each month from now up to 100 occurrences.
- * @package DateIntervalIterator
+ * @package JRBarnard\DateIntervalIterator
  */
-class DateIntervalIterator implements \Iterator, \Countable
+class DateIntervalIterator implements Iterator, Countable
 {
     /**
      * The format we want the date times as
