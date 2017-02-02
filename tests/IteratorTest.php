@@ -7,18 +7,8 @@ use JRBarnard\DateIntervalIterator\Exceptions\InvalidArgumentException;
 /**
  * Class IteratorTest
  */
-class IteratorTest extends PHPUnit_Framework_TestCase
+class IteratorTest extends TestCase
 {
-    /**
-     * Extracted to a const just in case is changed during development
-     */
-    const ITERATOR_CLASS = DateIntervalIterator::class;
-
-    /**
-     * General format we will use
-     */
-    const DATE_TIME_FORMAT = 'Y-m-d H:i:s';
-
     // Tests:
     // - constructor will take start, interval and end and pass off to relevant methods - done
     // - setStart expects a start date, either datetime, string or timestamp - done
@@ -1043,32 +1033,6 @@ class IteratorTest extends PHPUnit_Framework_TestCase
             [true],
             [false]
         ];
-    }
-
-    /**
-     * @param null $start
-     * @param null $interval
-     * @param null $endAfter
-     *
-     * @return DateIntervalIterator
-     */
-    protected function generateIterator($start = null, $interval = null, $endAfter = null)
-    {
-        if (!$interval instanceof IntervalInterface) {
-            $interval = new TestInterval();
-        }
-
-        if (is_null($start)) {
-            $start = new DateTime();
-        }
-
-        if (is_null($endAfter)) {
-            $endAfter = 10;
-        }
-
-        $class = self::ITERATOR_CLASS;
-
-        return new $class($start, $interval, $endAfter);
     }
 }
 
