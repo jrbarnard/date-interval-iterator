@@ -1,20 +1,22 @@
 <?php
-namespace DateIntervalIterator\Intervals;
+namespace JRBarnard\DateIntervalIterator\Intervals;
 
 use DateTime;
-use DateIntervalIterator\DateIntervalIterator;
+use JRBarnard\DateIntervalIterator\DateIntervalIterator;
 
 /**
  * Interface IntervalInterface
- * @package DateIntervalIterator\Intervals
+ * @package JRBarnard\DateIntervalIterator\Intervals
  */
 interface IntervalInterface
 {
     /**
      * Method that finds the next occurrence of the interval from current
+     *
      * @param DateTime $current
      * @param DateIntervalIterator $iterator
-     * @return mixed
+     *
+     * @return DateTime
      */
     public function findNextOccurrence(DateTime $current, DateIntervalIterator $iterator);
 }

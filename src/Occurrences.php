@@ -1,15 +1,15 @@
 <?php
-namespace DateIntervalIterator;
+namespace JRBarnard\DateIntervalIterator;
 
 use DateTime;
 use Countable;
 use ArrayAccess;
-use DateIntervalIterator\Exceptions\InvalidArgumentException;
+use JRBarnard\DateIntervalIterator\Exceptions\InvalidArgumentException;
 
 /**
  * Class Occurrences
  * A wrapper to store the found occurrences in
- * @package DateIntervalIterator
+ * @package JRBarnard\DateIntervalIterator
  */
 class Occurrences implements ArrayAccess, Countable
 {

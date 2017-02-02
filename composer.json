@@ -20,11 +20,11 @@
     },
     "autoload": {
         "psr-4": {
-            "DateIntervalIterator\\": "src/"
+            "JRBarnard\\DateIntervalIterator\\": "src/"
         }
     },
     "scripts": {
-        "test": "phpunit",
+        "test": "phpunit --colors=always",
         "coverage": "phpunit --coverage-html ./tests/report"
     }
 }

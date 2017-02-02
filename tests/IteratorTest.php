@@ -1,8 +1,8 @@
 <?php
 
-use DateIntervalIterator\DateIntervalIterator;
-use DateIntervalIterator\Intervals\IntervalInterface;
-use DateIntervalIterator\Exceptions\InvalidArgumentException;
+use JRBarnard\DateIntervalIterator\DateIntervalIterator;
+use JRBarnard\DateIntervalIterator\Intervals\IntervalInterface;
+use JRBarnard\DateIntervalIterator\Exceptions\InvalidArgumentException;
 
 /**
  * Class IteratorTest
@@ -115,11 +115,6 @@ class IteratorTest extends PHPUnit_Framework_TestCase
             ->willReturn(new DateTime('2014-06-13 12:03:30'));
 
         $method->invoke($iterator);
-
-//        // Now iterate
-//        count($iterator);
-//
-//        $this->assertEquals('2014-06-14 12:03:30', $method->invoke($iterator, 1)->format(self::DATE_TIME_FORMAT));
     }
 
     /** @test */
