@@ -83,6 +83,8 @@ class DateIntervalIterator implements Iterator, Countable
         $this->setStart($start);
         $this->setInterval($interval);
         $this->setEndAfter($end);
+
+        $this->occurrences = new Occurrences();
     }
 
     /**
@@ -389,7 +391,7 @@ class DateIntervalIterator implements Iterator, Countable
      */
     protected function addOccurrence(DateTime $occurrence)
     {
-        $this->occurrences[] = $occurrence;
+        $this->occurrences->push($occurrence);
         $this->occurrenceCount++;
 
         return $this;
@@ -559,5 +561,16 @@ class DateIntervalIterator implements Iterator, Countable
     public function isValidDirection($direction)
     {
         return in_array($direction, IntervalInterface::DIRECTIONS, true);
+    }
+
+    /**
+     * @return Occurrences
+     */
+    public function getOccurrences()
+    {
+        // Pre count to pre populate the occurrences object
+        $this->count();
+
+        return $this->occurrences;
     }
 }

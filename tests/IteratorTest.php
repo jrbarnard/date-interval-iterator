@@ -3,6 +3,7 @@
 use JRBarnard\DateIntervalIterator\DateIntervalIterator;
 use JRBarnard\DateIntervalIterator\Intervals\IntervalInterface;
 use JRBarnard\DateIntervalIterator\Exceptions\InvalidArgumentException;
+use JRBarnard\DateIntervalIterator\Occurrences;
 
 /**
  * Class IteratorTest
@@ -48,14 +49,67 @@ class IteratorTest extends TestCase
     // - Cant set an invalid direction - done
     // - Can get direction, will return set - done
     // - If set direction backwards, will run iterator backwards - done
-    // - Can get occurrences, will return occurrences object
-    // - Can get occurrences even if not iterated, will populate and return occurrences
+    // - Can get occurrences, will return occurrences object - done
+    // - Can get occurrences even if not iterated, will populate and return occurrences - done
     // - BUGFIX: setting max occurrences lower after initial iteration will stop iteration from working
     // - Will take into account time
     // - Will wrap months
     // - getNextOccurrence
     // - isWithinPeriod
     // - next
+
+    /** @test */
+    public function can_get_occurrences_before_iterating_the_iterator_and_will_internally_run_to_populate_before_returning()
+    {
+        $start = new DateTime('2012-10-10');
+        $interval = new OneDayInterval();
+        $endAfter = 10;
+        $iterator = $this->generateIterator($start, $interval, $endAfter);
+
+        // DONT RUN THE ITERATOR
+
+        $occurrences = $iterator->getOccurrences();
+
+        $expected = $start;
+        foreach($occurrences as $occurrence) {
+            $expected = (clone $start)->add(new DateInterval('P1D'));
+            $this->assertInstanceOf(DateTime::class, $occurrence);
+            $this->assertEquals($expected->getTimestamp(), $occurrence->getTimestamp());
+        }
+
+        $this->assertCount($endAfter, $occurrences);
+    }
+
+    /** @test */
+    public function can_get_occurrences_will_include_the_occurrences_from_the_iterator()
+    {
+        $start = new DateTime('2012-10-10');
+        $interval = new OneDayInterval();
+        $endAfter = 10;
+        $iterator = $this->generateIterator($start, $interval, $endAfter);
+        count($iterator);
+
+        $occurrences = $iterator->getOccurrences();
+
+        $expected = $start;
+        foreach($occurrences as $occurrence) {
+            $expected = (clone $start)->add(new DateInterval('P1D'));
+            $this->assertInstanceOf(DateTime::class, $occurrence);
+            $this->assertEquals($expected->getTimestamp(), $occurrence->getTimestamp());
+        }
+
+        $this->assertCount($endAfter, $occurrences);
+    }
+
+    /** @test */
+    public function can_get_occurrences_will_return_occurrences_object()
+    {
+        $iterator = $this->generateIterator();
+
+        $result = $iterator->getOccurrences();
+
+        $this->assertInstanceOf(Occurrences::class, $result);
+    }
 
     /** @test */
     public function if_set_direction_backwards_will_run_iterator_backwards()

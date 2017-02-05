@@ -233,6 +233,12 @@ years:
 ```php
 $iterator->setDirection(IntervalInterface::BACKWARDS);
 ```
+* You can get the occurrences object from the iterator, it will internally run the iterator to ensure it's populated
+before returning:
+```php
+$iterator->getOccurrences();
+// Will return an instance of Occurrences
+```
 
 ## <a name=contrib>Contributing</a> ##
 
