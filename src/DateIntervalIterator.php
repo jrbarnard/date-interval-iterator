@@ -11,7 +11,8 @@ use JRBarnard\DateIntervalIterator\Exceptions\InvalidArgumentException;
 /**
  * Class DateIntervalIterator
  * This class allows you to generate a time period with a specified interval that you can then iterate over.
- * For instance you can choose to get the 2nd Mondays, Wednesdays and Fridays of each month from now up to 100 occurrences.
+ * For instance you can choose to get the 2nd Mondays, Wednesdays and Fridays of each month from now up to
+ * 100 occurrences.
  * @package JRBarnard\DateIntervalIterator
  */
 class DateIntervalIterator implements Iterator, Countable
@@ -219,7 +220,8 @@ class DateIntervalIterator implements Iterator, Countable
         }
 
         throw new InvalidArgumentException(
-            'You must pass a valid endAfter datetime string, DateTime instance or int within the valid occurrences range'
+            'You must pass a valid endAfter datetime string, ' .
+            'DateTime instance or int within the valid occurrences range'
         );
     }
 
