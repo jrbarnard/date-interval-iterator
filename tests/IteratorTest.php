@@ -3,6 +3,7 @@
 use JRBarnard\DateIntervalIterator\DateIntervalIterator;
 use JRBarnard\DateIntervalIterator\Intervals\IntervalInterface;
 use JRBarnard\DateIntervalIterator\Exceptions\InvalidArgumentException;
+use JRBarnard\DateIntervalIterator\Occurrences;
 
 /**
  * Class IteratorTest
@@ -44,12 +45,127 @@ class IteratorTest extends TestCase
     // - Wont add to skip if already skipping - done
     // - Can get occurrence by key using method - done
     // - Get first occurrence will get already set if set already, otherwise will get next - done
+    // - Can set direction, will return self - done
+    // - Cant set an invalid direction - done
+    // - Can get direction, will return set - done
+    // - If set direction backwards, will run iterator backwards - done
+    // - Can get occurrences, will return occurrences object - done
+    // - Can get occurrences even if not iterated, will populate and return occurrences - done
     // - BUGFIX: setting max occurrences lower after initial iteration will stop iteration from working
     // - Will take into account time
     // - Will wrap months
     // - getNextOccurrence
     // - isWithinPeriod
     // - next
+
+    /** @test */
+    public function can_get_occurrences_before_iterating_the_iterator_and_will_internally_run_to_populate_before_returning()
+    {
+        $start = new DateTime('2012-10-10');
+        $interval = new OneDayInterval();
+        $endAfter = 10;
+        $iterator = $this->generateIterator($start, $interval, $endAfter);
+
+        // DONT RUN THE ITERATOR
+
+        $occurrences = $iterator->getOccurrences();
+
+        $expected = $start;
+        foreach($occurrences as $occurrence) {
+            $expected = (clone $start)->add(new DateInterval('P1D'));
+            $this->assertInstanceOf(DateTime::class, $occurrence);
+            $this->assertEquals($expected->getTimestamp(), $occurrence->getTimestamp());
+        }
+
+        $this->assertCount($endAfter, $occurrences);
+    }
+
+    /** @test */
+    public function can_get_occurrences_will_include_the_occurrences_from_the_iterator()
+    {
+        $start = new DateTime('2012-10-10');
+        $interval = new OneDayInterval();
+        $endAfter = 10;
+        $iterator = $this->generateIterator($start, $interval, $endAfter);
+        count($iterator);
+
+        $occurrences = $iterator->getOccurrences();
+
+        $expected = $start;
+        foreach($occurrences as $occurrence) {
+            $expected = (clone $start)->add(new DateInterval('P1D'));
+            $this->assertInstanceOf(DateTime::class, $occurrence);
+            $this->assertEquals($expected->getTimestamp(), $occurrence->getTimestamp());
+        }
+
+        $this->assertCount($endAfter, $occurrences);
+    }
+
+    /** @test */
+    public function can_get_occurrences_will_return_occurrences_object()
+    {
+        $iterator = $this->generateIterator();
+
+        $result = $iterator->getOccurrences();
+
+        $this->assertInstanceOf(Occurrences::class, $result);
+    }
+
+    /** @test */
+    public function if_set_direction_backwards_will_run_iterator_backwards()
+    {
+        $start = new DateTime('2012-10-10');
+        $endAfter = 5;
+        $interval = new OneDayInterval();
+        $iterator = $this->generateIterator($start, $interval, $endAfter);
+        $iterator->setDirection(IntervalInterface::BACKWARDS);
+
+        $expected = $start;
+        foreach($iterator as $occurrence) {
+            $expected = (clone $expected)->sub(new DateInterval('P1D'));
+            $this->assertEquals($expected->getTimestamp(), $occurrence->getTimestamp());
+        }
+
+        $this->assertEquals($endAfter, count($iterator));
+    }
+
+    /** @test */
+    public function can_get_direction()
+    {
+        $direction = IntervalInterface::BACKWARDS;
+
+        $iterator = $this->generateIterator();
+
+        $this->assertNotEquals($direction, $iterator->getDirection());
+        $iterator->setDirection($direction);
+
+        $this->assertSame($direction, $iterator->getDirection());
+    }
+
+    /**
+     * @dataProvider invalidDirections
+     * @test
+     * @param $invalidDirection
+     */
+    public function cant_set_direction_to_an_invalid_direction($invalidDirection)
+    {
+        $iterator = $this->generateIterator();
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(
+            'The direction must be one of the valid directions set within the Interval Interface'
+        );
+        $iterator->setDirection($invalidDirection);
+    }
+
+    /** @test */
+    public function can_set_direction_will_return_self()
+    {
+        $iterator = $this->generateIterator();
+        $result = $iterator->setDirection(IntervalInterface::FORWARDS);
+
+        $this->assertInstanceOf(self::ITERATOR_CLASS, $result);
+    }
 
     /** @test */
     public function can_get_first_occurrence_will_get_if_already_got()
@@ -953,6 +1069,25 @@ class IteratorTest extends TestCase
     /**
      * @return array
      */
+    public function invalidDirections()
+    {
+        return [
+            [new stdClass],
+            [[]],
+            [['test']],
+            [[1,2,3]],
+            [true],
+            [false],
+            ['test'],
+            [12],
+            [-1000],
+            [-1]
+        ];
+    }
+
+    /**
+     * @return array
+     */
     public function invalidMaxOccurrences()
     {
         return [
@@ -1046,11 +1181,11 @@ class TestInterval implements IntervalInterface
      * Method that finds the next occurrence of the interval from current
      *
      * @param DateTime $current
-     * @param DateIntervalIterator $iterator
+     * @param int $direction
      *
      * @return mixed
      */
-    public function findNextOccurrence(DateTime $current, DateIntervalIterator $iterator)
+    public function findNextOccurrence(DateTime $current, $direction = self::FORWARDS)
     {
         return $current;
     }
@@ -1066,11 +1201,11 @@ class SetIntervalTestInterval implements IntervalInterface
      * Method that finds the next occurrence of the interval from current
      *
      * @param DateTime $current
-     * @param DateIntervalIterator $iterator
+     * @param int $direction
      *
      * @return mixed
      */
-    public function findNextOccurrence(DateTime $current, DateIntervalIterator $iterator)
+    public function findNextOccurrence(DateTime $current, $direction = self::FORWARDS)
     {
         return $current;
     }
@@ -1085,11 +1220,11 @@ class TenDayInterval implements IntervalInterface
      * Method that finds the next occurrence of the interval from current
      *
      * @param DateTime $current
-     * @param DateIntervalIterator $iterator
+     * @param int $direction
      *
      * @return mixed
      */
-    public function findNextOccurrence(DateTime $current, DateIntervalIterator $iterator)
+    public function findNextOccurrence(DateTime $current, $direction = self::FORWARDS)
     {
         return (clone $current)->add(new DateInterval('P10D'));
     }
@@ -1104,12 +1239,19 @@ class OneDayInterval implements IntervalInterface
      * Method that finds the next occurrence of the interval from current
      *
      * @param DateTime $current
-     * @param DateIntervalIterator $iterator
+     * @param int $direction
      *
      * @return mixed
      */
-    public function findNextOccurrence(DateTime $current, DateIntervalIterator $iterator)
+    public function findNextOccurrence(DateTime $current, $direction = self::FORWARDS)
     {
-        return (clone $current)->add(new DateInterval('P1D'));
+        $interval = new DateInterval('P1D');
+        $cloned = clone $current;
+
+        if ($direction === self::BACKWARDS) {
+            return $cloned->sub($interval);
+        } else {
+            return $cloned->add($interval);
+        }
     }
 }

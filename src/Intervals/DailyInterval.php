@@ -3,7 +3,6 @@ namespace JRBarnard\DateIntervalIterator\Intervals;
 
 use DateTime;
 use DateInterval;
-use JRBarnard\DateIntervalIterator\DateIntervalIterator;
 use JRBarnard\DateIntervalIterator\Exceptions\InvalidArgumentException;
 
 /**
@@ -65,12 +64,20 @@ class DailyInterval implements IntervalInterface
      * Method that finds the next occurrence of the interval from current
      *
      * @param DateTime $current
-     * @param DateIntervalIterator $iterator
+     * @param $direction
      *
      * @return DateTime
      */
-    public function findNextOccurrence(DateTime $current, DateIntervalIterator $iterator)
+    public function findNextOccurrence(DateTime $current, $direction = self::FORWARDS)
     {
-        return (clone $current)->add(new DateInterval('P' . $this->getNumberOfDays() . 'D'));
+        $interval = new DateInterval('P' . $this->getNumberOfDays() . 'D');
+
+        $cloned = clone $current;
+
+        if ($direction === self::FORWARDS) {
+            return $cloned->add($interval);
+        } else {
+            return $cloned->sub($interval);
+        }
     }
 }

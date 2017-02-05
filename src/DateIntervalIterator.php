@@ -11,7 +11,8 @@ use JRBarnard\DateIntervalIterator\Exceptions\InvalidArgumentException;
 /**
  * Class DateIntervalIterator
  * This class allows you to generate a time period with a specified interval that you can then iterate over.
- * For instance you can choose to get the 2nd Mondays, Wednesdays and Fridays of each month from now up to 100 occurrences.
+ * For instance you can choose to get the 2nd Mondays, Wednesdays and Fridays of each month from now up to
+ * 100 occurrences.
  * @package JRBarnard\DateIntervalIterator
  */
 class DateIntervalIterator implements Iterator, Countable
@@ -67,6 +68,11 @@ class DateIntervalIterator implements Iterator, Countable
     protected $skip = [];
 
     /**
+     * @var int
+     */
+    protected $direction = IntervalInterface::FORWARDS;
+
+    /**
      * DateTimeIterator constructor.
      * @param $start
      * @param IntervalInterface $interval
@@ -77,6 +83,8 @@ class DateIntervalIterator implements Iterator, Countable
         $this->setStart($start);
         $this->setInterval($interval);
         $this->setEndAfter($end);
+
+        $this->occurrences = new Occurrences();
     }
 
     /**
@@ -219,7 +227,8 @@ class DateIntervalIterator implements Iterator, Countable
         }
 
         throw new InvalidArgumentException(
-            'You must pass a valid endAfter datetime string, DateTime instance or int within the valid occurrences range'
+            'You must pass a valid endAfter datetime string, ' .
+            'DateTime instance or int within the valid occurrences range'
         );
     }
 
@@ -382,7 +391,7 @@ class DateIntervalIterator implements Iterator, Countable
      */
     protected function addOccurrence(DateTime $occurrence)
     {
-        $this->occurrences[] = $occurrence;
+        $this->occurrences->push($occurrence);
         $this->occurrenceCount++;
 
         return $this;
@@ -436,7 +445,7 @@ class DateIntervalIterator implements Iterator, Countable
         $running = true;
         $occurrence = $current;
         while ($running === true) {
-            $occurrence = $interval->findNextOccurrence($occurrence, $this);
+            $occurrence = $interval->findNextOccurrence($occurrence, $this->getDirection());
             if (!$this->shouldSkip($occurrence)) {
                 $running = false;
             }
@@ -515,5 +524,53 @@ class DateIntervalIterator implements Iterator, Countable
         }
 
         return true;
+    }
+
+    /**
+     * @param $direction
+     *
+     * @return $this
+     */
+    public function setDirection($direction)
+    {
+        if (!$this->isValidDirection($direction)) {
+            throw new InvalidArgumentException(
+                'The direction must be one of the valid directions set within the Interval Interface'
+            );
+        }
+
+        $this->direction = $direction;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDirection()
+    {
+        return $this->direction;
+    }
+
+    /**
+     * Checks if a passed direction is a valid direction within the IntervalInterface
+     * @param $direction
+     *
+     * @return bool
+     */
+    public function isValidDirection($direction)
+    {
+        return in_array($direction, IntervalInterface::DIRECTIONS, true);
+    }
+
+    /**
+     * @return Occurrences
+     */
+    public function getOccurrences()
+    {
+        // Pre count to pre populate the occurrences object
+        $this->count();
+
+        return $this->occurrences;
     }
 }

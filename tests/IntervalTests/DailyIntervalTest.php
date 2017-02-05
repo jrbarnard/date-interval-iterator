@@ -2,6 +2,7 @@
 
 use JRBarnard\DateIntervalIterator\Intervals\DailyInterval;
 use JRBarnard\DateIntervalIterator\Exceptions\InvalidArgumentException;
+use JRBarnard\DateIntervalIterator\Intervals\IntervalInterface;
 
 /**
  * Class DailyIntervalTest
@@ -17,6 +18,23 @@ class DailyIntervalTest extends TestCase
     // setNumberOfDays will cast numeric strings to ints - done
     // getNumberOfDays will return the set number of days - done
     // Find next occurrence will return the passed datetime + X day(s) - done
+    // can run backwards - done
+
+    /** @test */
+    public function can_run_interval_backwards()
+    {
+        $interval = $this->generateDailyInterval();
+
+        $interval->setNumberOfDays(10);
+
+        $start = new DateTime();
+
+        $expected = (clone $start)->sub(new DateInterval('P10D'));
+
+        $result = $interval->findNextOccurrence($start, IntervalInterface::BACKWARDS);
+
+        $this->assertSame($expected->getTimestamp(), $result->getTimestamp());
+    }
 
     /**
      * @dataProvider lessThanOneNumberOfDaysProvider
@@ -42,9 +60,8 @@ class DailyIntervalTest extends TestCase
     public function findNextOccurrence_will_return_the_passed_in_date_time_plus_set_days($originalDateTime, $numberOfDays, $nextDateTime)
     {
         $interval = $this->generateDailyInterval($numberOfDays);
-        $iterator = $this->generateIterator((clone $originalDateTime)->sub(new DateInterval('P10D')), $interval, 1);
 
-        $next = $interval->findNextOccurrence($originalDateTime, $iterator);
+        $next = $interval->findNextOccurrence($originalDateTime);
 
         $this->assertEquals($nextDateTime->getTimestamp(), $next->getTimestamp());
     }

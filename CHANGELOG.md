@@ -12,3 +12,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - DailyInterval + tests
 - Add TravisCI config
 - Add styleci and travisci status images to readme
+- Added HourlyInterval + tests
+- Added php code sniffer dev dependency and composer script
+- Added contrib and readme files

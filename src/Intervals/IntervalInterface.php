@@ -2,7 +2,7 @@
 namespace JRBarnard\DateIntervalIterator\Intervals;
 
 use DateTime;
-use JRBarnard\DateIntervalIterator\DateIntervalIterator;
+use Symfony\Component\Translation\Interval;
 
 /**
  * Interface IntervalInterface
@@ -11,12 +11,30 @@ use JRBarnard\DateIntervalIterator\DateIntervalIterator;
 interface IntervalInterface
 {
     /**
+     * Forwards direction
+     */
+    const FORWARDS = 1;
+
+    /**
+     * Backwards direction
+     */
+    const BACKWARDS = 0;
+
+    /**
+     * Valid directions that can be used
+     */
+    const DIRECTIONS = [
+        self::FORWARDS,
+        self::BACKWARDS
+    ];
+
+    /**
      * Method that finds the next occurrence of the interval from current
      *
      * @param DateTime $current
-     * @param DateIntervalIterator $iterator
+     * @param $direction
      *
      * @return DateTime
      */
-    public function findNextOccurrence(DateTime $current, DateIntervalIterator $iterator);
+    public function findNextOccurrence(DateTime $current, $direction = self::FORWARDS);
 }

@@ -2,7 +2,6 @@
 namespace JRBarnard\DateIntervalIterator\Intervals;
 
 use DateTime;
-use JRBarnard\DateIntervalIterator\DateIntervalIterator;
 use JRBarnard\DateIntervalIterator\Exceptions\InvalidArgumentException;
 
 /**
@@ -21,7 +20,7 @@ class HourlyInterval implements IntervalInterface
      *
      * @param $numberOfHours
      */
-    public function __construct($numberOfHours)
+    public function __construct($numberOfHours = 1)
     {
         $this->setNumberOfHours($numberOfHours);
     }
@@ -64,14 +63,21 @@ class HourlyInterval implements IntervalInterface
      * Method that finds the next occurrence of the interval from current
      *
      * @param DateTime $current
-     * @param DateIntervalIterator $iterator
+     * @param int $direction
      *
      * @return DateTime
      */
-    public function findNextOccurrence(DateTime $current, DateIntervalIterator $iterator)
+    public function findNextOccurrence(DateTime $current, $direction = self::FORWARDS)
     {
         $minutes = $this->getNumberOfHours() * 60;
         $interval = new \DateInterval('PT' . (int) $minutes . 'M');
-        return (clone $current)->add($interval);
+
+        $cloned = clone $current;
+
+        if ($direction === self::FORWARDS) {
+            return $cloned->add($interval);
+        } else {
+            return $cloned->sub($interval);
+        }
     }
 }
