@@ -2,6 +2,7 @@
 
 use JRBarnard\DateIntervalIterator\Intervals\HourlyInterval;
 use JRBarnard\DateIntervalIterator\Exceptions\InvalidArgumentException;
+use JRBarnard\DateIntervalIterator\Intervals\IntervalInterface;
 
 /**
  * Class HourlyIntervalTest
@@ -16,7 +17,23 @@ class HourlyIntervalTest extends TestCase
     // setNumberOfHours does not accept values less than or equal to zero - done
     // getNumberOfHours will return the set number of days - done
     // Find next occurrence will return the passed datetime + X hour(s) - done
-    // backwards
+    // can run backwards - done
+
+    /** @test */
+    public function can_run_interval_backwards()
+    {
+        $interval = $this->generateHourlyInterval();
+
+        $interval->setNumberOfHours(10);
+
+        $start = new DateTime();
+
+        $expected = (clone $start)->sub(new DateInterval('PT10H'));
+
+        $result = $interval->findNextOccurrence($start, IntervalInterface::BACKWARDS);
+
+        $this->assertSame($expected->getTimestamp(), $result->getTimestamp());
+    }
 
     /**
      * @dataProvider zeroOrLessNumberOfHoursProvider
