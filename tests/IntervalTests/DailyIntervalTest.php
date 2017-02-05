@@ -17,6 +17,7 @@ class DailyIntervalTest extends TestCase
     // setNumberOfDays will cast numeric strings to ints - done
     // getNumberOfDays will return the set number of days - done
     // Find next occurrence will return the passed datetime + X day(s) - done
+    // backwards
 
     /**
      * @dataProvider lessThanOneNumberOfDaysProvider
@@ -42,9 +43,8 @@ class DailyIntervalTest extends TestCase
     public function findNextOccurrence_will_return_the_passed_in_date_time_plus_set_days($originalDateTime, $numberOfDays, $nextDateTime)
     {
         $interval = $this->generateDailyInterval($numberOfDays);
-        $iterator = $this->generateIterator((clone $originalDateTime)->sub(new DateInterval('P10D')), $interval, 1);
 
-        $next = $interval->findNextOccurrence($originalDateTime, $iterator);
+        $next = $interval->findNextOccurrence($originalDateTime);
 
         $this->assertEquals($nextDateTime->getTimestamp(), $next->getTimestamp());
     }

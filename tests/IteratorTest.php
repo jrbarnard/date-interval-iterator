@@ -50,6 +50,7 @@ class IteratorTest extends TestCase
     // - getNextOccurrence
     // - isWithinPeriod
     // - next
+    // - BACKWARDS
 
     /** @test */
     public function can_get_first_occurrence_will_get_if_already_got()
@@ -1046,11 +1047,11 @@ class TestInterval implements IntervalInterface
      * Method that finds the next occurrence of the interval from current
      *
      * @param DateTime $current
-     * @param DateIntervalIterator $iterator
+     * @param int $direction
      *
      * @return mixed
      */
-    public function findNextOccurrence(DateTime $current, DateIntervalIterator $iterator)
+    public function findNextOccurrence(DateTime $current, $direction = self::FORWARDS)
     {
         return $current;
     }
@@ -1066,11 +1067,11 @@ class SetIntervalTestInterval implements IntervalInterface
      * Method that finds the next occurrence of the interval from current
      *
      * @param DateTime $current
-     * @param DateIntervalIterator $iterator
+     * @param int $direction
      *
      * @return mixed
      */
-    public function findNextOccurrence(DateTime $current, DateIntervalIterator $iterator)
+    public function findNextOccurrence(DateTime $current, $direction = self::FORWARDS)
     {
         return $current;
     }
@@ -1085,11 +1086,11 @@ class TenDayInterval implements IntervalInterface
      * Method that finds the next occurrence of the interval from current
      *
      * @param DateTime $current
-     * @param DateIntervalIterator $iterator
+     * @param int $direction
      *
      * @return mixed
      */
-    public function findNextOccurrence(DateTime $current, DateIntervalIterator $iterator)
+    public function findNextOccurrence(DateTime $current, $direction = self::FORWARDS)
     {
         return (clone $current)->add(new DateInterval('P10D'));
     }
@@ -1104,11 +1105,11 @@ class OneDayInterval implements IntervalInterface
      * Method that finds the next occurrence of the interval from current
      *
      * @param DateTime $current
-     * @param DateIntervalIterator $iterator
+     * @param int $direction
      *
      * @return mixed
      */
-    public function findNextOccurrence(DateTime $current, DateIntervalIterator $iterator)
+    public function findNextOccurrence(DateTime $current, $direction = self::FORWARDS)
     {
         return (clone $current)->add(new DateInterval('P1D'));
     }

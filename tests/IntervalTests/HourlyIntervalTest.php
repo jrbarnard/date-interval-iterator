@@ -16,6 +16,7 @@ class HourlyIntervalTest extends TestCase
     // setNumberOfHours does not accept values less than or equal to zero - done
     // getNumberOfHours will return the set number of days - done
     // Find next occurrence will return the passed datetime + X hour(s) - done
+    // backwards
 
     /**
      * @dataProvider zeroOrLessNumberOfHoursProvider
@@ -41,9 +42,8 @@ class HourlyIntervalTest extends TestCase
     public function findNextOccurrence_will_return_the_passed_in_date_time_plus_set_hours($originalDateTime, $numberOfHours, $nextDateTime)
     {
         $interval = $this->generateHourlyInterval($numberOfHours);
-        $iterator = $this->generateIterator((clone $originalDateTime)->sub(new DateInterval('P10D')), $interval, 1);
 
-        $next = $interval->findNextOccurrence($originalDateTime, $iterator);
+        $next = $interval->findNextOccurrence($originalDateTime);
 
         $this->assertEquals($nextDateTime->getTimestamp(), $next->getTimestamp());
     }
