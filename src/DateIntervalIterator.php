@@ -68,6 +68,11 @@ class DateIntervalIterator implements Iterator, Countable
     protected $skip = [];
 
     /**
+     * @var int
+     */
+    protected $direction = IntervalInterface::FORWARDS;
+
+    /**
      * DateTimeIterator constructor.
      * @param $start
      * @param IntervalInterface $interval
@@ -438,7 +443,7 @@ class DateIntervalIterator implements Iterator, Countable
         $running = true;
         $occurrence = $current;
         while ($running === true) {
-            $occurrence = $interval->findNextOccurrence($occurrence, $this);
+            $occurrence = $interval->findNextOccurrence($occurrence, $this->getDirection());
             if (!$this->shouldSkip($occurrence)) {
                 $running = false;
             }
@@ -517,5 +522,42 @@ class DateIntervalIterator implements Iterator, Countable
         }
 
         return true;
+    }
+
+    /**
+     * @param $direction
+     *
+     * @return $this
+     */
+    public function setDirection($direction)
+    {
+        if (!$this->isValidDirection($direction)) {
+            throw new InvalidArgumentException(
+                'The direction must be one of the valid directions set within the Interval Interface'
+            );
+        }
+
+        $this->direction = $direction;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDirection()
+    {
+        return $this->direction;
+    }
+
+    /**
+     * Checks if a passed direction is a valid direction within the IntervalInterface
+     * @param $direction
+     *
+     * @return bool
+     */
+    public function isValidDirection($direction)
+    {
+        return in_array($direction, IntervalInterface::DIRECTIONS, true);
     }
 }

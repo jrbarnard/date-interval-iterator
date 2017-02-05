@@ -10,8 +10,23 @@ use Symfony\Component\Translation\Interval;
  */
 interface IntervalInterface
 {
+    /**
+     * Forwards direction
+     */
     const FORWARDS = 1;
+
+    /**
+     * Backwards direction
+     */
     const BACKWARDS = 0;
+
+    /**
+     * Valid directions that can be used
+     */
+    const DIRECTIONS = [
+        self::FORWARDS,
+        self::BACKWARDS
+    ];
 
     /**
      * Method that finds the next occurrence of the interval from current

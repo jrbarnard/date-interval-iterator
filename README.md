@@ -19,7 +19,7 @@ it gives us some more functionality also.
 
 ## <a name=req>Requirements</a> ##
 
-The only requirement currently is a minimum PHP version of 5.5.9.
+The only requirement currently is a minimum PHP version of 5.6.
 
 CURRENTLY HACK / HHVM IS NOT SUPPORTED
 
@@ -227,6 +227,11 @@ $iterator->setMaxOccurrences(20);
 // If you now try and set an end after over the max it will throw an exception
 // If you set an end after to a date, it wil stop iterating either when it reaches that date or the max occurrences,
 // whichever occurs first.
+```
+* You can set a direction for the iterator, so you can get the say every last Wednesday of every month from now, back 2
+years:
+```php
+$iterator->setDirection(IntervalInterface::BACKWARDS);
 ```
 
 ## <a name=contrib>Contributing</a> ##
