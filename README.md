@@ -137,6 +137,7 @@ and Wednesday of every 3rd week. - COMING SOON
 ```php
 // Basic usage via constructor
 new WeeklyInterval([WeeklyInterval::WEDNESDAY, WeeklyInterval::TUESDAY], 3);
+
 // Magic setters
 (new WeeklyInterval())->everyTuesday()->andEveryWednesday()->ofEvery3rdWeek();
 
@@ -156,12 +157,12 @@ new MonthlyInterval(MonthlyInterval::LAST, [MonthlyInterval::WEDNESDAY, MonthlyI
 (new MonthlyInterval())->every(MonthlyInterval::LAST, [MonthlyInterval::WEDNESDAY, MonthlyInterval::THURSDAY])->ofEveryMonth(2);
 ```
 
-### DateIntervalIterator ###
+### Date Interval Iterator ###
 
 The Iterator is the class you can use to apply your intervals over a set DateTime / Occurrence range.
 
 For example it lets me do things like:
-1. Get an occurrence every hour and a half until next week:
+- Get an occurrence every hour and a half until next week:
 ```php
 $start = new DateTime(); // Now
 $end = (new DateTime())->add(new DateInterval('P1W'));
@@ -174,7 +175,7 @@ foreach($iterator as $occurrence) {
     // $occurrence will be a DateTime instance of every hour and half till next week
 }
 ```
-2. Get an the next 50 occurrences of every 2nd Wednesday and Thursdays:
+- Get the next 50 occurrences of every 2nd Wednesday and Thursdays:
 ```php
 $start = new DateTime(); // Now
 $end = 50;
@@ -188,9 +189,10 @@ foreach($iterator as $occurrence) {
 }
 ```
 
-This allows us to calculate dates for recurring events easily.
+This allows us to calculate dates for things like recurring events easily.
 
-As mentioned above, you can create your own intervals, so you should be able to create an iterator to your own needs.
+As mentioned above, you can create your own intervals, so you should be able to create an interval /  iterator to fit 
+your own needs.
 
 Iterators also have a few extra features:
 * They are countable, if all you want is how many times an occurrence will occur you can do:
@@ -210,7 +212,7 @@ $iterator->shouldSkip('2012-02-02 12:30:00');
 ```
 * You can set when the iterator should end to a DateTime or a number of occurrences, for example you may want to get an 
 occurrence every hour before 5:30pm on a certain day, you can and it will stop iterating when the next occurrence it 
-would get, goes beyond this limit. Or if you prefer to set a number of occurrence limit, e.g every hour for the next 10 
+would get goes beyond this limit. Or if you prefer to set a number of occurrence limit, e.g every hour for the next 10 
 hours, you can by just passing an int:
 ```php
 $iterator->setEndAfter(10);
