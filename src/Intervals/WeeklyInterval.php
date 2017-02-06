@@ -27,10 +27,7 @@ class WeeklyInterval implements IntervalInterface
      */
     public function setWeeks($weeks = 1)
     {
-        if (
-            !is_numeric($weeks) ||
-            $weeks < 1
-        ) {
+        if (!is_numeric($weeks) || $weeks < 1) {
             throw new InvalidArgumentException(
                 'You must pass a valid number of weeks to the interval'
             );
