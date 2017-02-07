@@ -20,6 +20,7 @@ class WeeklyIntervalTest extends TestCase
     // if setWeeks not passed int greater than 0 will throw - done
     // can getWeeks using method, will get set - done
     // can getDays using method, will get set - done
+    // getDays will return sorted days - done
     // Find next occurrence will work with relevant set days and weeks - done
     // Can run backwards
     // Can use magic setters and helper setters
@@ -29,6 +30,35 @@ class WeeklyIntervalTest extends TestCase
     //  - ofEvery3rdWeek, ofEveryWeek,
     //  - ofEveryWeek will accept number of weeks
     //  - TODO: MORE
+
+    /** @test */
+    public function setDays_will_store_sorted_days()
+    {
+        $days = [
+            WeeklyInterval::SATURDAY, // 6
+            WeeklyInterval::WEDNESDAY, // 3
+            WeeklyInterval::MONDAY, // 1
+            WeeklyInterval::THURSDAY, // 4
+        ];
+
+        $expectedOrder = [
+            WeeklyInterval::MONDAY, // 1
+            WeeklyInterval::WEDNESDAY, // 3
+            WeeklyInterval::THURSDAY, // 4
+            WeeklyInterval::SATURDAY, // 6
+        ];
+
+        $interval = $this->generateWeeklyInterval();
+
+        $interval->setDays($days);
+
+        // Check set in order
+        $class = new ReflectionObject($interval);
+        $property = $class->getProperty('days');
+        $property->setAccessible(true);
+
+        $this->assertSame($expectedOrder, $property->getValue($interval));
+    }
 
     /**
      * @dataProvider findNextOccurrenceProvider

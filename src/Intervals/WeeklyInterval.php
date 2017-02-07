@@ -2,6 +2,7 @@
 namespace JRBarnard\DateIntervalIterator\Intervals;
 
 use DateTime;
+use JRBarnard\DateIntervalIterator\DateHelper;
 use JRBarnard\DateIntervalIterator\Exceptions\InvalidArgumentException;
 
 /**
@@ -60,6 +61,8 @@ class WeeklyInterval implements IntervalInterface
             }
         }
 
+        // Sort before they go in
+        sort($days);
         $this->days = $days;
 
         return $this;
