@@ -12,7 +12,7 @@ class DateHelper
     /**
      * @param DateTime $dateTime
      *
-     * @return string
+     * @return int
      */
     public static function getDayOfTheWeek(DateTime $dateTime)
     {

@@ -100,6 +100,32 @@ class WeeklyIntervalTest extends TestCase
      * @param $weeks
      * @param $expected
      */
+    public function findNextOccurrenceWorksBackwards($expected, $days, $weeks, $start)
+    {
+        $interval = $this->generateWeeklyInterval();
+
+        $interval->setDays($days);
+        $interval->setWeeks($weeks);
+
+        $next = $interval->findNextOccurrence($start, WeeklyInterval::BACKWARDS);
+
+//        if ($expected->getTimestamp() !== $next->getTimestamp()) {
+//            var_dump($expected);
+//            var_dump($next);
+//        }
+
+        $this->assertSame($expected->getTimestamp(), $next->getTimestamp());
+    }
+
+    /**
+     * @dataProvider findNextOccurrenceProvider
+     * @test
+     *
+     * @param $start
+     * @param $days
+     * @param $weeks
+     * @param $expected
+     */
     public function findNextOccurrence_will_take_into_account_set_days_and_weeks_and_return_next_occurrence($start, $days, $weeks, $expected)
     {
         $interval = $this->generateWeeklyInterval();
@@ -109,7 +135,7 @@ class WeeklyIntervalTest extends TestCase
 
         $next = $interval->findNextOccurrence($start);
 
-        $this->assertSame($expected->getTimeStamp(), $next->getTimestamp());
+        $this->assertSame($expected->getTimestamp(), $next->getTimestamp());
     }
 
     /** @test */
@@ -249,7 +275,7 @@ class WeeklyIntervalTest extends TestCase
                 new DateTime('2012-04-19 12:00:00'),
                 [
                     WeeklyInterval::SUNDAY,
-                    WeeklyInterval::SATURDAY
+                    WeeklyInterval::SATURDAY // expected next
                 ],
                 2,
                 new DateTime('2012-04-21 12:00:00'),
@@ -262,8 +288,10 @@ class WeeklyIntervalTest extends TestCase
             ],
             [
                 new DateTime('2012-04-19 12:00:00'),
-                WeeklyInterval::THURSDAY,
-                WeeklyInterval::MONDAY,
+                [
+                    WeeklyInterval::THURSDAY,
+                    WeeklyInterval::MONDAY,
+                ],
                 4,
                 new DateTime('2012-05-14 12:00:00')
             ],
@@ -271,7 +299,7 @@ class WeeklyIntervalTest extends TestCase
                 new DateTime('2012-04-19 12:00:00'),
                 WeeklyInterval::THURSDAY,
                 5,
-                new DateTime('2012-05-21 12:00:00'),
+                new DateTime('2012-05-24 12:00:00'),
             ],
             [
                 new DateTime('2012-04-19 12:00:00'),
@@ -279,7 +307,7 @@ class WeeklyIntervalTest extends TestCase
                     WeeklyInterval::MONDAY
                 ],
                 52,
-                new DateTime('2013-04-22 12:00:00'),
+                new DateTime('2013-04-15 12:00:00'),
             ],
             [
                 new DateTime('2012-04-20 12:00:00'),

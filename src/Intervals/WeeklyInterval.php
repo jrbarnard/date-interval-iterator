@@ -23,12 +23,6 @@ class WeeklyInterval implements IntervalInterface
     protected $weeks = 1;
 
     /**
-     * Storage for usage during the find next loop
-     * @var
-     */
-    protected $lastSetDayOfWeek;
-
-    /**
      * @param int $weeks
      *
      * @return $this
@@ -122,42 +116,31 @@ class WeeklyInterval implements IntervalInterface
         $days = $this->getDays();
         $currentDayOfWeek = DateHelper::getDayOfTheWeek($current);
 
-        if ($direction === self::BACKWARDS) {
-            $days = array_reverse($days);
-        }
-
         $occurrence = null;
 
-        $count = 0;
         foreach ($days as $day) {
-            $day += $daysToAdd;
+            $day = $day + $daysToAdd;
 
-            // Is the current day of the week less than or same as the iterated day?
-            // And has it already been set?
-            if ($currentDayOfWeek <= $day && $day !== $this->lastSetDayOfWeek) {
+            if ($currentDayOfWeek <= $day) {
 
-                // Get next date time by adding the difference in currentDay of week to next day of the week
-                // TODO: extract into helper?
-                // TODO: Get working in reverse
-                $occurrence = (clone $current)->add(new DateInterval('P' . $day - $currentDayOfWeek . 'D'));
-                $occurrenceDayOfWeek = DateHelper::getDayOfTheWeek($occurrence);
+                $daysToMove = $day - $currentDayOfWeek;
 
-                // If it's the not on the same day or it is and it's in the future from the current occurrence,
-                // then we've got our next occurrence and can break the loop.
-                if ($occurrenceDayOfWeek !== $day) {
-                    // set the day of week flag
-                    $this->lastSetDayOfWeek = $occurrenceDayOfWeek;
+                // Get next date time by adding / subbing the difference in currentDay of week to next day of the week
+                $interval = new DateInterval('P' . abs($daysToMove) . 'D');
+                $found = clone $current;
+
+                $found = $found->add($interval);
+
+                // If the found isn't the start then we've actually found and can break out of the loop
+                if ($found->getTimestamp() !== $current->getTimestamp()) {
+                    $occurrence = $found;
                     break;
                 }
             }
-            $count++;
+        }
 
-            // If we've reached the end of the array, add / remove N week(s) and reset the days array as we don't yet have
-            // an occurrence and will look to next / previous week.
-            if ($count >= $daysToAdd) {
-                // TODO: Get working in reverse
-                $occurrence = $this->findNext($current, $direction, $daysToAdd + (7 * $this->getWeeks()));
-            }
+        if (!$occurrence instanceof DateTime) {
+            $occurrence = $this->findNext($current, $direction, $daysToAdd + (7 * $this->getWeeks()));
         }
 
         return $occurrence;
