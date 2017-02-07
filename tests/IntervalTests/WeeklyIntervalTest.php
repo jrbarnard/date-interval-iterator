@@ -15,6 +15,7 @@ class WeeklyIntervalTest extends TestCase
     // setDays accepts valid days of the week - done
     // setDays accepts either single day of the week or array - done
     // setDays will return interval - done
+    // if set same days via setDays, will only set one - done
     // all days must be valid days (stored as consts) - will throw if not - done
     // setWeeks accepts an int greater than 0, will store in weeks - done
     // if setWeeks not passed int greater than 0 will throw - done
@@ -30,6 +31,36 @@ class WeeklyIntervalTest extends TestCase
     //  - ofEvery3rdWeek, ofEveryWeek,
     //  - ofEveryWeek will accept number of weeks
     //  - TODO: MORE
+
+    /** @test */
+    public function if_set_same_days_will_only_set_once()
+    {
+        $days = [
+            WeeklyInterval::SATURDAY,
+            WeeklyInterval::SATURDAY,
+            WeeklyInterval::SUNDAY,
+        ];
+
+        $interval = $this->generateWeeklyInterval();
+        $interval->setDays($days);
+
+        // Check not set duplicates
+        $class = new ReflectionObject($interval);
+        $property = $class->getProperty('days');
+        $property->setAccessible(true);
+
+        $actuallySet = $property->getValue($interval);
+        $this->assertCount(2, $actuallySet);
+
+        $alreadySet = [];
+        foreach($actuallySet as $day) {
+            // Fail if we already found it
+            if (in_array($day, $alreadySet)) {
+                $this->fail('Duplicate day found: ' . $day . ' in: ' . json_encode($alreadySet));
+            }
+            $alreadySet[] = $day;
+        }
+    }
 
     /** @test */
     public function setDays_will_store_sorted_days()

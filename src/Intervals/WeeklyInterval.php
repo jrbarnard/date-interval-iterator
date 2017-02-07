@@ -62,15 +62,21 @@ class WeeklyInterval implements IntervalInterface
         }
 
         // Loop over the days passed in and verify all are valid
+        $daysToSet = [];
         foreach ($days as $day) {
             if (!in_array($day, self::DAYS_OF_WEEK, true)) {
                 throw new InvalidArgumentException($exceptionMessage);
             }
+
+            // Only add in if not already added in
+            if (!in_array($day, $daysToSet)) {
+                $daysToSet[] = $day;
+            }
         }
 
         // Sort before they go in
-        sort($days);
-        $this->days = $days;
+        sort($daysToSet);
+        $this->days = $daysToSet;
 
         return $this;
     }
