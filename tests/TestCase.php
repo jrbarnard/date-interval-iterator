@@ -23,9 +23,11 @@ class TestCase extends PHPUnit_Framework_TestCase
      * @param null $interval
      * @param null $endAfter
      *
+     * @param int $direction
+     *
      * @return Iterator
      */
-    protected function generateIterator($start = null, $interval = null, $endAfter = null)
+    protected function generateIterator($start = null, $interval = null, $endAfter = null, $direction = IntervalInterface::FORWARDS)
     {
         if (!$interval instanceof IntervalInterface) {
             $interval = new TestInterval();
@@ -41,6 +43,6 @@ class TestCase extends PHPUnit_Framework_TestCase
 
         $class = self::ITERATOR_CLASS;
 
-        return new $class($start, $interval, $endAfter);
+        return new $class($start, $interval, $endAfter, $direction);
     }
 }

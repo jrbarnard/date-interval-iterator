@@ -23,7 +23,7 @@ class WeeklyIntervalTest extends TestCase
     // can getDays using method, will get set - done
     // getDays will return sorted days - done
     // Find next occurrence will work with relevant set days and weeks - done
-    // Can run backwards
+    // Can run backwards - done
     // Can use magic setters and helper setters
     //  - everyTuesday, everyWednesday will overwrite
     //  - everyTuesday andEveryWednesday will append

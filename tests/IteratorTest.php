@@ -48,6 +48,7 @@ class IteratorTest extends TestCase
     // - Cant set an invalid direction - done
     // - Can get direction, will return set - done
     // - If set direction backwards, will run iterator backwards - done
+    // - If running backwards and set endAfter to datetime, will run to that datetime as does forward - done
     // - Can get occurrences, will return occurrences object - done
     // - Can get occurrences even if not iterated, will populate and return occurrences - done
     // - BUGFIX: setting max occurrences lower after initial iteration will stop iteration from working
@@ -56,6 +57,23 @@ class IteratorTest extends TestCase
     // - getNextOccurrence
     // - isWithinPeriod
     // - next
+
+    /** @test */
+    public function if_running_backwards_with_date_endafter_will_run_up_till_it()
+    {
+        $start = new DateTime('2012-10-10');
+        $endAfter = new DateTime('2012-09-19');
+        $interval = new OneDayInterval();
+        $iterator = $this->generateIterator($start, $interval, $endAfter, IntervalInterface::BACKWARDS);
+
+        $expected = $start;
+        foreach($iterator as $occurrence) {
+            $expected = (clone $expected)->sub(new DateInterval('P1D'));
+            $this->assertEquals($expected->getTimestamp(), $occurrence->getTimestamp());
+        }
+
+        $this->assertEquals(21, count($iterator));
+    }
 
     /** @test */
     public function can_get_occurrences_before_iterating_the_iterator_and_will_internally_run_to_populate_before_returning()
@@ -708,7 +726,8 @@ class IteratorTest extends TestCase
         $datetime = new DateTime();
         $interval = new TestInterval();
         $endAfter = 10;
-        $iterator = call_user_func([self::ITERATOR_CLASS,'init'], $datetime, $interval, $endAfter);
+        $direction = IntervalInterface::FORWARDS;
+        $iterator = call_user_func([self::ITERATOR_CLASS,'init'], $datetime, $interval, $endAfter, $direction);
         $this->assertInstanceOf(self::ITERATOR_CLASS, $iterator);
     }
 
@@ -1029,6 +1048,7 @@ class IteratorTest extends TestCase
         $interval = new TestInterval();
         $dateTime = new DateTime();
         $endAfter = 10;
+        $direction = IntervalInterface::BACKWARDS;
 
         $classname = self::ITERATOR_CLASS;
 
@@ -1038,7 +1058,8 @@ class IteratorTest extends TestCase
             ->setMethods([
                 'setStart',
                 'setInterval',
-                'setEndAfter'
+                'setEndAfter',
+                'setDirection'
             ])
             ->getMockForAbstractClass();
 
@@ -1055,10 +1076,14 @@ class IteratorTest extends TestCase
             ->method('setEndAfter')
             ->with($endAfter);
 
+        $mock->expects($this->once())
+            ->method('setDirection')
+            ->with($direction);
+
         // now call the constructor
         $reflectedClass = new ReflectionClass($classname);
         $constructor = $reflectedClass->getConstructor();
-        $constructor->invoke($mock, $dateTime, $interval, $endAfter);
+        $constructor->invoke($mock, $dateTime, $interval, $endAfter, $direction);
     }
 
     /**

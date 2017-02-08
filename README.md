@@ -1,10 +1,14 @@
-# Date Time Interval Iterator #
+# Recurrence #
 
-[![Build Status](https://travis-ci.org/jrbarnard/date-interval-iterator.svg?branch=master)](
-https://travis-ci.org/jrbarnard/date-interval-iterator)
+[![Build Status](https://travis-ci.org/jrbarnard/recurrence.svg?branch=master)](
+https://travis-ci.org/jrbarnard/recurrence)
 [![StyleCI](https://styleci.io/repos/77830859/shield?branch=master)](https://styleci.io/repos/77830859)
 
-The DateTime interval iterator allows us to iterate over a period of time getting the occurrence at each interval.
+This library allows you to create recurring DateTimes based on intervals, e.g every last wednesday of the month for the
+next 2 years.
+
+It comes with some core Intervals, but it's built to allow you to create and use your own for your own project
+requirements.
 
 It acts much like the DatePeriod PHP iterator in that it accepts a start date, end date and an interval object, however
 it gives us some more functionality also.
@@ -77,7 +81,7 @@ Intervals are the classes that define how we get the next occurrence within the 
 of PHP's core DateIntervals where their purpose is to take a datetime and return back a datetime after applying their
 interval to it.
 
-E.g Datetime of 2012-01-01, interval or 1 day, we would expect to get back a datetime of 2012-01-02.
+E.g Datetime of 2012-01-01, interval of 1 day, we would expect to get back a datetime of 2012-01-02.
 
 Intervals can be as simple or as complex as you want, we provide a few, however you can make and use your own, they
 just must implement the IntervalInterface.
@@ -133,7 +137,7 @@ new HourlyInterval(1.5);
 (new HourlyInterval())->setNumberOfHours(1.5);
 ```
 * WeeklyInterval - Accepts days of the week and the weekly occurrence, so you can do intervals such as: every Tuesday
-and Wednesday of every 3rd week. - COMING SOON
+and Wednesday of every 3rd week.
 ```php
 // Basic usage via constructor
 new WeeklyInterval([WeeklyInterval::WEDNESDAY, WeeklyInterval::TUESDAY], 3);
@@ -161,7 +165,7 @@ new MonthlyInterval(MonthlyInterval::LAST, [MonthlyInterval::WEDNESDAY, MonthlyI
 
 The Iterator is the class you can use to apply your intervals over a set DateTime / Occurrence range.
 
-For example it lets me do things like:
+For example it lets you do things like:
 - Get an occurrence every hour and a half until next week:
 ```php
 $start = new DateTime(); // Now
@@ -240,6 +244,10 @@ before returning:
 ```php
 $iterator->getOccurrences();
 // Will return an instance of Occurrences
+```
+* You can also run iterators in reverse by setting a direction:
+```php
+$iterator->setDirection(IntervalInterface::BACKWARDS);
 ```
 
 ## <a name=contrib>Contributing</a> ##

@@ -70,18 +70,21 @@ class Iterator implements IteratorInterface, Countable
     /**
      * @var int
      */
-    protected $direction = IntervalInterface::FORWARDS;
+    protected $direction;
 
     /**
      * DateTimeIterator constructor.
+     *
      * @param $start
      * @param IntervalInterface $interval
      * @param $end
+     * @param $direction
      */
-    public function __construct($start, IntervalInterface $interval, $end)
+    public function __construct($start, IntervalInterface $interval, $end, $direction = IntervalInterface::FORWARDS)
     {
         $this->setStart($start);
         $this->setInterval($interval);
+        $this->setDirection($direction);
         $this->setEndAfter($end);
 
         $this->occurrences = new Occurrences();
@@ -91,11 +94,13 @@ class Iterator implements IteratorInterface, Countable
      * @param $start
      * @param $interval
      * @param $end
+     * @param $direction
+     *
      * @return Iterator
      */
-    public static function init($start, $interval, $end)
+    public static function init($start, $interval, $end, $direction)
     {
-        return new self($start, $interval, $end);
+        return new self($start, $interval, $end, $direction);
     }
 
     /**
@@ -216,7 +221,10 @@ class Iterator implements IteratorInterface, Countable
         }
 
         if ($this->isValidDateTime($endAfter)) {
-            if ($endAfter->getTimestamp() > $this->getStart()->getTimestamp()) {
+            if ((IntervalInterface::FORWARDS === $this->getDirection() &&
+                    $endAfter->getTimestamp() > $this->getStart()->getTimestamp()) ||
+                (IntervalInterface::BACKWARDS === $this->getDirection() &&
+                    $endAfter->getTimestamp() < $this->getStart()->getTimestamp())) {
                 $this->end = $endAfter;
                 return $this;
             } else {
@@ -475,9 +483,18 @@ class Iterator implements IteratorInterface, Countable
             return false;
         }
 
-        // Check that the time of the next occurrence isn't beyond our endAfter datetime (if is a datetime)
-        if ($this->isValidDateTime($endAfter) && $occurrence->getTimestamp() > $endAfter->getTimestamp()) {
-            return false;
+        // Check that the time of the next occurrence isn't before / after our endAfter datetime (if is a datetime)
+        // Depending on direction
+        if ($this->isValidDateTime($endAfter)) {
+            if (IntervalInterface::BACKWARDS === $this->getDirection() &&
+                $endAfter->getTimestamp() > $occurrence->getTimestamp()) {
+                return false;
+            }
+
+            if (IntervalInterface::FORWARDS === $this->getDirection() &&
+                $endAfter->getTimestamp() < $occurrence->getTimestamp()) {
+                return false;
+            }
         }
 
         return true;
