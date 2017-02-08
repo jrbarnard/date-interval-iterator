@@ -161,7 +161,7 @@ new MonthlyInterval(MonthlyInterval::LAST, [MonthlyInterval::WEDNESDAY, MonthlyI
 (new MonthlyInterval())->every(MonthlyInterval::LAST, [MonthlyInterval::WEDNESDAY, MonthlyInterval::THURSDAY])->ofEveryMonth(2);
 ```
 
-### Date Interval Iterator ###
+### Iterator ###
 
 The Iterator is the class you can use to apply your intervals over a set DateTime / Occurrence range.
 
