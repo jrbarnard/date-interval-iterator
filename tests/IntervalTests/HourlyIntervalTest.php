@@ -28,7 +28,9 @@ class HourlyIntervalTest extends TestCase
 
         $start = new DateTime();
 
-        $expected = (clone $start)->sub(new DateInterval('PT10H'));
+        $cloned = clone $start;
+
+        $expected = $cloned->sub(new DateInterval('PT10H'));
 
         $result = $interval->findNextOccurrence($start, IntervalInterface::BACKWARDS);
 

@@ -68,7 +68,8 @@ class IteratorTest extends TestCase
 
         $expected = $start;
         foreach($iterator as $occurrence) {
-            $expected = (clone $expected)->sub(new DateInterval('P1D'));
+            $cloned = clone $expected;
+            $expected = $cloned->sub(new DateInterval('P1D'));
             $this->assertEquals($expected->getTimestamp(), $occurrence->getTimestamp());
         }
 
@@ -89,7 +90,8 @@ class IteratorTest extends TestCase
 
         $expected = $start;
         foreach($occurrences as $occurrence) {
-            $expected = (clone $start)->add(new DateInterval('P1D'));
+            $cloned = clone $start;
+            $expected = $cloned->add(new DateInterval('P1D'));
             $this->assertInstanceOf(DateTime::class, $occurrence);
             $this->assertEquals($expected->getTimestamp(), $occurrence->getTimestamp());
         }
@@ -110,7 +112,8 @@ class IteratorTest extends TestCase
 
         $expected = $start;
         foreach($occurrences as $occurrence) {
-            $expected = (clone $start)->add(new DateInterval('P1D'));
+            $cloned = clone $start;
+            $expected = $cloned->add(new DateInterval('P1D'));
             $this->assertInstanceOf(DateTime::class, $occurrence);
             $this->assertEquals($expected->getTimestamp(), $occurrence->getTimestamp());
         }
@@ -139,7 +142,8 @@ class IteratorTest extends TestCase
 
         $expected = $start;
         foreach($iterator as $occurrence) {
-            $expected = (clone $expected)->sub(new DateInterval('P1D'));
+            $cloned = clone $expected;
+            $expected = $cloned->sub(new DateInterval('P1D'));
             $this->assertEquals($expected->getTimestamp(), $occurrence->getTimestamp());
         }
 
@@ -694,7 +698,8 @@ class IteratorTest extends TestCase
         // Current should be date time plus 10 days
         $this->assertSame(0, $iterator->key());
         $this->assertInstanceOf(DateTime::class, $iterator->current());
-        $this->assertSame((clone $datetime)->add(new DateInterval('P10D'))->getTimestamp(), $iterator->current()->getTimestamp());
+        $cloned = clone $datetime;
+        $this->assertSame($cloned->add(new DateInterval('P10D'))->getTimestamp(), $iterator->current()->getTimestamp());
 
         // Start iterator again to check currents and keys are correct
         $count = 0;
@@ -821,7 +826,8 @@ class IteratorTest extends TestCase
         $this->assertSame($endAfter, $iterator->getEndAfter());
 
         // Try with datetime
-        $endAfter = (clone $startDateTime)->add(new DateInterval('P10D'));
+        $cloned = clone $startDateTime;
+        $endAfter = $cloned->add(new DateInterval('P10D'));
         $this->assertNotSame($endAfter, $iterator->getEndAfter());
         $iterator->setEndAfter($endAfter);
 
@@ -830,7 +836,8 @@ class IteratorTest extends TestCase
 
         // Try with datetime string, check converted to datetime
         $format = 'Y-m-d H:i:s';
-        $endAfter = (clone $endAfter)->add(new DateInterval('P10D'))->format($format);
+        $cloned = clone $endAfter;
+        $endAfter = $cloned->add(new DateInterval('P10D'))->format($format);
         $this->assertNotSame($endAfter, $iterator->getEndAfter()->format($format));
         $iterator->setEndAfter($endAfter);
 
@@ -845,7 +852,8 @@ class IteratorTest extends TestCase
         $iterator = $this->generateIterator($startDateTime);
 
         // Create a past date time and verify it throws if we attempt to set it
-        $pastDateTime = (clone $startDateTime)->sub(new DateInterval('P10D'));
+        $cloned = clone $startDateTime;
+        $pastDateTime = $cloned->sub(new DateInterval('P10D'));
         $this->assertLessThan($startDateTime->getTimestamp(), $pastDateTime->getTimestamp());
 
         $this->expectException(InvalidArgumentException::class);
@@ -876,7 +884,8 @@ class IteratorTest extends TestCase
         $iterator = $this->generateIterator();
 
         // Ensure in future from original start
-        $datetime = (clone $iterator->getStart())->add(new DateInterval('P10D'));
+        $cloned = clone $iterator->getStart();
+        $datetime = $cloned->add(new DateInterval('P10D'));
         $this->assertNotSame($datetime->getTimestamp(), $iterator->getStart());
         // Check not same for false positives
         $originalEndAfter = $iterator->getEndAfter();
@@ -951,7 +960,12 @@ class IteratorTest extends TestCase
     {
         $iterator = $this->generateIterator();
 
-        $this->expectException(TypeError::class);
+        if (version_compare(PHP_VERSION, '7', '<=')) {
+            $this->expectException(PHPUnit_Framework_Error::class);
+        } else {
+            $this->expectException(TypeError::class);
+        }
+
         $iterator->setInterval($interval);
     }
 
@@ -1250,7 +1264,8 @@ class TenDayInterval implements IntervalInterface
      */
     public function findNextOccurrence(DateTime $current, $direction = self::FORWARDS)
     {
-        return (clone $current)->add(new DateInterval('P10D'));
+        $cloned = clone $current;
+        return $cloned->add(new DateInterval('P10D'));
     }
 }
 
