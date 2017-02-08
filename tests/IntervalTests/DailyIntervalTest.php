@@ -1,8 +1,8 @@
 <?php
 
-use JRBarnard\DateIntervalIterator\Intervals\DailyInterval;
-use JRBarnard\DateIntervalIterator\Exceptions\InvalidArgumentException;
-use JRBarnard\DateIntervalIterator\Intervals\IntervalInterface;
+use JRBarnard\Recurrence\Intervals\DailyInterval;
+use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
+use JRBarnard\Recurrence\Intervals\IntervalInterface;
 
 /**
  * Class DailyIntervalTest

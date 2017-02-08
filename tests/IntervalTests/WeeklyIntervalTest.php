@@ -1,7 +1,7 @@
 <?php
 
-use JRBarnard\DateIntervalIterator\Intervals\WeeklyInterval;
-use JRBarnard\DateIntervalIterator\Exceptions\InvalidArgumentException;
+use JRBarnard\Recurrence\Intervals\WeeklyInterval;
+use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
 
 /**
  * Class WeeklyIntervalTest

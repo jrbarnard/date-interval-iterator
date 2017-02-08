@@ -1,8 +1,8 @@
 <?php
 
-use JRBarnard\DateIntervalIterator\Intervals\HourlyInterval;
-use JRBarnard\DateIntervalIterator\Exceptions\InvalidArgumentException;
-use JRBarnard\DateIntervalIterator\Intervals\IntervalInterface;
+use JRBarnard\Recurrence\Intervals\HourlyInterval;
+use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
+use JRBarnard\Recurrence\Intervals\IntervalInterface;
 
 /**
  * Class HourlyIntervalTest

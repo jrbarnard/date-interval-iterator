@@ -1,21 +1,21 @@
 <?php
-namespace JRBarnard\DateIntervalIterator;
+namespace JRBarnard\Recurrence;
 
 use DateTime;
-use Iterator;
 use Countable;
 use Exception;
-use JRBarnard\DateIntervalIterator\Intervals\IntervalInterface;
-use JRBarnard\DateIntervalIterator\Exceptions\InvalidArgumentException;
+use Iterator as IteratorInterface;
+use JRBarnard\Recurrence\Intervals\IntervalInterface;
+use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
 
 /**
- * Class DateIntervalIterator
+ * Class Recurrence
  * This class allows you to generate a time period with a specified interval that you can then iterate over.
  * For instance you can choose to get the 2nd Mondays, Wednesdays and Fridays of each month from now up to
  * 100 occurrences.
- * @package JRBarnard\DateIntervalIterator
+ * @package JRBarnard\Recurrence
  */
-class DateIntervalIterator implements Iterator, Countable
+class Iterator implements IteratorInterface, Countable
 {
     /**
      * The format we want the date times as
@@ -91,7 +91,7 @@ class DateIntervalIterator implements Iterator, Countable
      * @param $start
      * @param $interval
      * @param $end
-     * @return DateIntervalIterator
+     * @return Iterator
      */
     public static function init($start, $interval, $end)
     {

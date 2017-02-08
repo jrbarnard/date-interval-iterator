@@ -1,6 +1,6 @@
 <?php
 
-use JRBarnard\DateIntervalIterator\Intervals\IntervalInterface;
+use JRBarnard\Recurrence\Intervals\IntervalInterface;
 
 /**
  * Class IntervalInterfaceTest

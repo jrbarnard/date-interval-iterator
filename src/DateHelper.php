@@ -1,11 +1,11 @@
 <?php
-namespace JRBarnard\DateIntervalIterator;
+namespace JRBarnard\Recurrence;
 
 use DateTime;
 
 /**
  * Class DateHelper
- * @package JRBarnard\DateIntervalIterator
+ * @package JRBarnard\Recurrence
  */
 class DateHelper
 {

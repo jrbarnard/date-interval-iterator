@@ -1,9 +1,8 @@
 <?php
 
-use JRBarnard\DateIntervalIterator\DateIntervalIterator;
-use JRBarnard\DateIntervalIterator\Intervals\IntervalInterface;
-use JRBarnard\DateIntervalIterator\Exceptions\InvalidArgumentException;
-use JRBarnard\DateIntervalIterator\Occurrences;
+use JRBarnard\Recurrence\Occurrences;
+use JRBarnard\Recurrence\Intervals\IntervalInterface;
+use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
 
 /**
  * Class IteratorTest

@@ -1,7 +1,7 @@
 <?php
 
-use JRBarnard\DateIntervalIterator\DateIntervalIterator;
-use JRBarnard\DateIntervalIterator\Intervals\IntervalInterface;
+use JRBarnard\Recurrence\Iterator;
+use JRBarnard\Recurrence\Intervals\IntervalInterface;
 
 /**
  * Class TestCase
@@ -11,7 +11,7 @@ class TestCase extends PHPUnit_Framework_TestCase
     /**
      * Extracted to a const just in case is changed during development
      */
-    const ITERATOR_CLASS = DateIntervalIterator::class;
+    const ITERATOR_CLASS = Iterator::class;
 
     /**
      * General format we will use
@@ -23,7 +23,7 @@ class TestCase extends PHPUnit_Framework_TestCase
      * @param null $interval
      * @param null $endAfter
      *
-     * @return DateIntervalIterator
+     * @return Iterator
      */
     protected function generateIterator($start = null, $interval = null, $endAfter = null)
     {

@@ -1,11 +1,11 @@
 <?php
-namespace JRBarnard\DateIntervalIterator\Intervals;
+namespace JRBarnard\Recurrence\Intervals;
 
 use DateTime;
 
 /**
  * Interface IntervalInterface
- * @package JRBarnard\DateIntervalIterator\Intervals
+ * @package JRBarnard\Recurrence\Intervals
  */
 interface IntervalInterface
 {

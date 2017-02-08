@@ -1,14 +1,14 @@
 <?php
-namespace JRBarnard\DateIntervalIterator\Intervals;
+namespace JRBarnard\Recurrence\Intervals;
 
 use DateTime;
 use DateInterval;
-use JRBarnard\DateIntervalIterator\DateHelper;
-use JRBarnard\DateIntervalIterator\Exceptions\InvalidArgumentException;
+use JRBarnard\Recurrence\DateHelper;
+use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
 
 /**
  * Class WeeklyInterval
- * @package JRBarnard\DateIntervalIterator\Intervals
+ * @package JRBarnard\Recurrence\Intervals
  */
 class WeeklyInterval implements IntervalInterface
 {
