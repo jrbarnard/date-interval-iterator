@@ -1,8 +1,8 @@
 <?php
 
-use JRBarnard\DateIntervalIterator\Intervals\HourlyInterval;
-use JRBarnard\DateIntervalIterator\Exceptions\InvalidArgumentException;
-use JRBarnard\DateIntervalIterator\Intervals\IntervalInterface;
+use JRBarnard\Recurrence\Intervals\HourlyInterval;
+use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
+use JRBarnard\Recurrence\Intervals\IntervalInterface;
 
 /**
  * Class HourlyIntervalTest
@@ -28,7 +28,9 @@ class HourlyIntervalTest extends TestCase
 
         $start = new DateTime();
 
-        $expected = (clone $start)->sub(new DateInterval('PT10H'));
+        $cloned = clone $start;
+
+        $expected = $cloned->sub(new DateInterval('PT10H'));
 
         $result = $interval->findNextOccurrence($start, IntervalInterface::BACKWARDS);
 

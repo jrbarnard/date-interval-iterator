@@ -1,12 +1,12 @@
 <?php
-namespace JRBarnard\DateIntervalIterator\Intervals;
+namespace JRBarnard\Recurrence\Intervals;
 
 use DateTime;
-use JRBarnard\DateIntervalIterator\Exceptions\InvalidArgumentException;
+use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
 
 /**
  * Class HourlyInterval
- * @package JRBarnard\DateIntervalIterator\Intervals
+ * @package JRBarnard\Recurrence\Intervals
  */
 class HourlyInterval implements IntervalInterface
 {

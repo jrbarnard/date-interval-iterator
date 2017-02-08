@@ -1,9 +1,9 @@
 {
-    "name": "jrbarnard/date-interval-iterator",
-    "description": "A package for creating a collection of dates based off a variety of regular intervals",
+    "name": "jrbarnard/recurrence",
+    "description": "A library for calculating and iterating over recurring dates / times",
     "license": "MIT",
-    "keywords": ["PHP","Datetime","Iterator","Date interval"],
-    "homepage": "https://github.com/jrbarnard/date-interval-iterator",
+    "keywords": ["DateTime", "Iterator", "interval", "recurrence", "date", "time", "DateInterval"],
+    "homepage": "https://github.com/jrbarnard/recurrence",
     "authors": [
         {
             "name": "James Barnard",
@@ -24,12 +24,13 @@
             "tests/TestCase.php"
         ],
         "psr-4": {
-            "JRBarnard\\DateIntervalIterator\\": "src/"
+            "JRBarnard\\Recurrence\\": "src/"
         }
     },
     "scripts": {
         "test": "phpunit --colors=always",
         "test:cov": "phpunit --coverage-html ./tests/report",
-        "test:style": "./vendor/bin/phpcs --standard=PSR2 src"
+        "test:style": "./vendor/bin/phpcs --standard=PSR2 src",
+        "docs": "./vendor/bin/phpdoc -d ./src -t ./docs"
     }
 }

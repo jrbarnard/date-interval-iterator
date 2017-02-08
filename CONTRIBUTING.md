@@ -8,3 +8,23 @@ Before doing any work, please log the issue in the github issue tracker.
     - If a bugfix, name as bugfix/{issue_number}
 3. Do work, commit and push branch
 4. Create a pull request on GitHub
+
+## Tests ##
+
+Please ensure to add tests and check coverage and coding standards by running:
+```
+# Run tests
+composer test
+
+# Run coverage
+composer test:cov
+
+# Run codesniffer
+composer test:style
+```
+
+The project aims to stay at 100% coverage.
+
+## Coding style ##
+
+PSR2

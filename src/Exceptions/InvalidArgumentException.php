@@ -1,11 +1,11 @@
 <?php
-namespace JRBarnard\DateIntervalIterator\Exceptions;
+namespace JRBarnard\Recurrence\Exceptions;
 
 use InvalidArgumentException as BaseInvalidArgumentException;
 
 /**
  * Class InvalidArgumentException
- * @package JRBarnard\DateIntervalIterator\Exceptions
+ * @package JRBarnard\Recurrence\Exceptions
  */
 class InvalidArgumentException extends BaseInvalidArgumentException
 {
