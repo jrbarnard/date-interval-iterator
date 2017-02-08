@@ -116,23 +116,38 @@ class WeeklyInterval implements IntervalInterface
         $days = $this->getDays();
         $currentDayOfWeek = DateHelper::getDayOfTheWeek($current);
 
+        if (self::BACKWARDS === $direction) {
+            $days = array_reverse($days);
+        }
+
         $occurrence = null;
 
         foreach ($days as $day) {
-            $day = $day + $daysToAdd;
+            if (self::BACKWARDS === $direction) {
+                $day = $day - $daysToAdd;
+            } else {
+                $day = $day + $daysToAdd;
+            }
 
-            if ($currentDayOfWeek <= $day) {
-
+            if ((self::FORWARDS === $direction && $currentDayOfWeek <= $day) ||
+                (self::BACKWARDS === $direction && $currentDayOfWeek >= $day)) {
                 $daysToMove = $day - $currentDayOfWeek;
 
-                // Get next date time by adding / subbing the difference in currentDay of week to next day of the week
+                // Get next date time by adding / subbing the difference in currentDay of week to next day of the week.
                 $interval = new DateInterval('P' . abs($daysToMove) . 'D');
                 $found = clone $current;
 
-                $found = $found->add($interval);
+                // Depending on direction we will sub or add the interval
+                if (self::BACKWARDS === $direction) {
+                    $found = $found->sub($interval);
+                } else {
+                    $found = $found->add($interval);
+                }
 
-                // If the found isn't the start then we've actually found and can break out of the loop
-                if ($found->getTimestamp() !== $current->getTimestamp()) {
+                // If the found is greater / less than the current (depending on direction) then we've actually found
+                // and can break out of the loop.
+                if ((self::BACKWARDS === $direction && $found->getTimestamp() < $current->getTimestamp()) ||
+                    (self::FORWARDS === $direction && $found->getTimestamp() > $current->getTimestamp())) {
                     $occurrence = $found;
                     break;
                 }

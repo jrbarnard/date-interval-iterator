@@ -92,7 +92,8 @@ class WeeklyIntervalTest extends TestCase
     }
 
     /**
-     * @dataProvider findNextOccurrenceProvider
+     * @dataProvider findNextOccurrenceBackwardsProvider
+     *
      * @test
      *
      * @param $start
@@ -108,11 +109,6 @@ class WeeklyIntervalTest extends TestCase
         $interval->setWeeks($weeks);
 
         $next = $interval->findNextOccurrence($start, WeeklyInterval::BACKWARDS);
-
-//        if ($expected->getTimestamp() !== $next->getTimestamp()) {
-//            var_dump($expected);
-//            var_dump($next);
-//        }
 
         $this->assertSame($expected->getTimestamp(), $next->getTimestamp());
     }
@@ -314,6 +310,174 @@ class WeeklyIntervalTest extends TestCase
                 WeeklyInterval::WEEKDAYS,
                 1,
                 new DateTime('2012-04-23 12:00:00'),
+            ],
+            // 2017-01-01 - 0
+            // [0,1,2,3,4,5,6]
+            // NEXT 1 (2017-01-02)
+            // PREV 6 (2016-12-31)
+            [
+                new DateTime('2017-01-01'),
+                WeeklyInterval::DAYS_OF_WEEK,
+                1,
+                new DateTime('2017-01-02'),
+            ],
+            [
+                new DateTime('2016-12-31'),
+                WeeklyInterval::DAYS_OF_WEEK,
+                1,
+                new DateTime('2017-01-01'),
+            ],
+            // 2017-01-04 - 3
+            // [0,1,2,3,4,5,6]
+            // NEXT 4 (2017-01-05)
+            // PREV 2 (2017-01-03)
+            [
+                new DateTime('2017-01-04'),
+                WeeklyInterval::DAYS_OF_WEEK,
+                1,
+                new DateTime('2017-01-05'),
+            ],
+            // 2017-01-04 - 3
+            // [0,1,2]
+            // NEXT 0 (2017-01-08)
+            // PREV 2 (2017-01-03)
+            [
+                new DateTime('2017-01-04'),
+                [
+                    WeeklyInterval::SUNDAY,
+                    WeeklyInterval::MONDAY,
+                    WeeklyInterval::TUESDAY
+                ],
+                1,
+                new DateTime('2017-01-08'),
+            ],
+            // 2017-01-04 - 3
+            // [0,1,2,3]
+            // NEXT 0 (2017-01-08)
+            // PREV 2 (2017-01-03)
+            [
+                new DateTime('2017-01-04'),
+                [
+                    WeeklyInterval::SUNDAY,
+                    WeeklyInterval::MONDAY,
+                    WeeklyInterval::TUESDAY,
+                    WeeklyInterval::WEDNESDAY
+                ],
+                1,
+                new DateTime('2017-01-08'),
+            ],
+            // 2017-01-04 - 3
+            // [3,4,5]
+            // NEXT 4 (2017-01-05)
+            // PREV 5 (2017-12-30)
+            [
+                new DateTime('2017-01-04'),
+                [
+                    WeeklyInterval::WEDNESDAY,
+                    WeeklyInterval::THURSDAY,
+                    WeeklyInterval::FRIDAY
+                ],
+                1,
+                new DateTime('2017-01-05'),
+            ],
+        ];
+    }
+
+    /**
+     * @return array
+     */
+    public function findNextOccurrenceBackwardsProvider()
+    {
+        return [
+            // 2017-01-04 - 3
+            // [3,4,5]
+            // NEXT 4 (2017-01-05)
+            // PREV 5 (2016-12-30)
+            [
+                new DateTime('2016-12-30'),
+                [
+                    WeeklyInterval::WEDNESDAY,
+                    WeeklyInterval::THURSDAY,
+                    WeeklyInterval::FRIDAY
+                ],
+                1,
+                new DateTime('2017-01-04'),
+            ],
+            // 2017-01-04 - 3
+            // [0,1,2,3]
+            // NEXT 0 (2017-01-08)
+            // PREV 2 (2017-01-03)
+            [
+                new DateTime('2017-01-03'),
+                [
+                    WeeklyInterval::SUNDAY,
+                    WeeklyInterval::MONDAY,
+                    WeeklyInterval::TUESDAY
+                ],
+                1,
+                new DateTime('2017-01-04'),
+            ],
+            // 2017-01-04 - 3
+            // [0,1,2]
+            // NEXT 0 (2017-01-08)
+            // PREV 2 (2017-01-03)
+            [
+                new DateTime('2017-01-03'),
+                [
+                    WeeklyInterval::SUNDAY,
+                    WeeklyInterval::MONDAY,
+                    WeeklyInterval::TUESDAY
+                ],
+                1,
+                new DateTime('2017-01-04'),
+            ],
+            // 2017-01-01 - 0
+            // [0,1,2,3,4,5,6]
+            // NEXT 1 (2017-01-02)
+            // PREV 6 (2016-12-31)
+            [
+                new DateTime('2017-01-03'),
+                WeeklyInterval::DAYS_OF_WEEK,
+                1,
+                new DateTime('2017-01-04'),
+            ],
+            [
+                new DateTime('2012-04-15 12:00:00'),
+                [
+                    WeeklyInterval::SUNDAY,
+                    WeeklyInterval::SATURDAY
+                ],
+                2,
+                new DateTime('2012-04-21 12:00:00'),
+            ],
+            [
+                new DateTime('2012-04-20 12:00:00'),
+                WeeklyInterval::FRIDAY,
+                3,
+                new DateTime('2012-04-21 12:00:00')
+            ],
+            [
+                new DateTime('2012-04-19 12:00:00'),
+                [
+                    WeeklyInterval::THURSDAY,
+                    WeeklyInterval::MONDAY,
+                ],
+                4,
+                new DateTime('2012-05-14 12:00:00')
+            ],
+            [
+                new DateTime('2012-04-19 12:00:00'),
+                WeeklyInterval::THURSDAY,
+                5,
+                new DateTime('2012-05-24 12:00:00'),
+            ],
+            [
+                new DateTime('2012-04-16 12:00:00'),
+                [
+                    WeeklyInterval::MONDAY
+                ],
+                52,
+                new DateTime('2013-04-14 12:00:00'),
             ],
         ];
     }
