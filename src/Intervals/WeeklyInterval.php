@@ -208,6 +208,16 @@ class WeeklyInterval implements IntervalInterface
     }
 
     /**
+     * @param int $weeks
+     *
+     * @return WeeklyInterval
+     */
+    public function ofEveryWeek($weeks = 1)
+    {
+        return $this->setWeeks($weeks);
+    }
+
+    /**
      * @param $name
      * @param $arguments
      *

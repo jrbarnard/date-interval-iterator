@@ -33,8 +33,25 @@ class WeeklyIntervalTest extends TestCase
     //  - andEvery will throw if invalid day - done
     //  - call andEveryWednesday twice will not add twice - done
     //  - ofEvery3rdWeek, ofEveryWeek,
-    //  - ofEveryWeek will accept number of weeks
+    //  - ofEveryWeek will accept number of weeks - done
+    //  - Test all together and getting correct occurrence
     //  - TODO: MORE
+
+    /** @test */
+    public function ofEveryWeek_will_set_number_of_weeks_pass_through_to_set_weeks_defaults_to_one()
+    {
+        $interval = $this->generateWeeklyInterval([IntervalInterface::MONDAY], 2);
+        $weeks = 4;
+
+        $return = $interval->ofEveryWeek();
+
+        $this->assertInstanceOf(self::INTERVAL_CLASS, $return);
+
+        $this->assertEquals(1, $interval->getWeeks());
+
+        $interval->ofEveryWeek($weeks);
+        $this->assertEquals($weeks, $interval->getWeeks());
+    }
 
     /** @test */
     public function andEvery_magic_method_will_append_onto_existing_days()
