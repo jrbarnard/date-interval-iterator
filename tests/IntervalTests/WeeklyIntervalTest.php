@@ -29,11 +29,63 @@ class WeeklyIntervalTest extends TestCase
     // Can use magic setters and helper setters
     //  - everyTuesday, everyWednesday will overwrite - done
     //  - Will throw exception if non existent day - done
-    //  - everyTuesday andEveryWednesday will append
-    //  - call andEveryWednesday twice will not add twice
+    //  - everyTuesday andEveryWednesday will append - done
+    //  - andEvery will throw if invalid day - done
+    //  - call andEveryWednesday twice will not add twice - done
     //  - ofEvery3rdWeek, ofEveryWeek,
     //  - ofEveryWeek will accept number of weeks
     //  - TODO: MORE
+
+    /** @test */
+    public function andEvery_magic_method_will_append_onto_existing_days()
+    {
+        $interval = $this->generateWeeklyInterval();
+
+        $interval->everyWednesday();
+
+        $this->assertEquals([IntervalInterface::WEDNESDAY], $interval->getDays());
+
+        $interval->andEveryFriday();
+        $this->assertEquals([IntervalInterface::WEDNESDAY, IntervalInterface::FRIDAY], $interval->getDays());
+
+        // Won't duplicate
+        $interval->andEveryWednesday();
+        $this->assertEquals([IntervalInterface::WEDNESDAY, IntervalInterface::FRIDAY], $interval->getDays());
+    }
+
+    /** @test */
+    public function andEvery_magic_method_will_throw_if_invalid_day()
+    {
+        $interval = $this->generateWeeklyInterval();
+
+        $this->expectException(BadMethodCallException::class);
+        $this->expectExceptionMessage('Call to undefined method {' . self::INTERVAL_CLASS . '}::{andEveryNever}()');
+        $interval->andEveryNever();
+    }
+
+    /**
+     * @dataProvider magicAndEveryMethodProvider
+     * @test
+     *
+     * @param $method
+     * @param $expected
+     */
+    public function andEvery_magic_method_will_set_days($method, $expected)
+    {
+        $interval = $this->generateWeeklyInterval();
+
+        // Remove days to start with
+        $class = new ReflectionObject($interval);
+        $property = $class->getProperty('days');
+        $property->setAccessible(true);
+        $property->setValue($interval, []);
+
+        $return = $interval->$method();
+
+        $this->assertInstanceOf(self::INTERVAL_CLASS, $return);
+
+        $this->assertEquals([$expected], $interval->getDays());
+    }
 
     /** @test */
     public function calling_invalid_magic_setter_name_will_throw_exception()
@@ -329,6 +381,43 @@ class WeeklyIntervalTest extends TestCase
     /**
      * HELPERS & PROVIDERS
      */
+
+    /**
+     * @return array
+     */
+    public function magicAndEveryMethodProvider()
+    {
+        return [
+            [
+                'andEveryMonday',
+                IntervalInterface::MONDAY
+            ],
+            [
+                'andEveryTuesday',
+                IntervalInterface::TUESDAY
+            ],
+            [
+                'andEveryWednesday',
+                IntervalInterface::WEDNESDAY
+            ],
+            [
+                'andEveryThursday',
+                IntervalInterface::THURSDAY
+            ],
+            [
+                'andEveryFriday',
+                IntervalInterface::FRIDAY
+            ],
+            [
+                'andEverySaturday',
+                IntervalInterface::SATURDAY
+            ],
+            [
+                'andEverySunday',
+                IntervalInterface::SUNDAY
+            ]
+        ];
+    }
 
     /**
      * @return array

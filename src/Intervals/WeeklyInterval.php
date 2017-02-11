@@ -21,6 +21,14 @@ use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
  * @method everyFriday
  * @method everySaturday
  * @method everySunday
+ *
+ * @method andEveryMonday
+ * @method andEveryTuesday
+ * @method andEveryWednesday
+ * @method andEveryThursday
+ * @method andEveryFriday
+ * @method andEverySaturday
+ * @method andEverySunday
  */
 class WeeklyInterval implements IntervalInterface
 {
@@ -208,18 +216,51 @@ class WeeklyInterval implements IntervalInterface
     public function __call($name, $arguments)
     {
         $everyPrefix = 'every';
+        $andEveryPrefix = 'andEvery';
 
         // Magic call to every{day} methods
         if (false !== strpos($name, $everyPrefix, 0)) {
-            // Get the latter part of the name, see if exists as a constant
-            $day = strtoupper(substr($name, strlen($everyPrefix)));
-            if (defined('self::' . $day) && $this->isValidDay($day = constant('self::' . $day))) {
+            $day = $this->getDayFromMethod($name, $everyPrefix);
+            if (false !== $day) {
                 $this->setDays($day);
 
                 return $this;
             }
         }
 
+        // Magic call to andEvery{day} methods
+        if (false !== strpos($name, $andEveryPrefix, 0)) {
+            $day = $this->getDayFromMethod($name, $andEveryPrefix);
+            if (false !== $day) {
+                $this->setDays(array_merge($this->getDays(), [$day]));
+
+                return $this;
+            }
+        }
+
         throw new BadMethodCallException('Call to undefined method {' . __CLASS__ . '}::{' . $name . '}()');
+    }
+
+    /**
+     * @param $methodName
+     * @param $prefix
+     *
+     * @return bool|int
+     */
+    protected function getDayFromMethod($methodName, $prefix)
+    {
+        $day = strtoupper(substr($methodName, strlen($prefix)));
+
+        if (!defined('self::' . $day)) {
+            return false;
+        }
+
+        $day = constant('self::' . $day);
+
+        if (!$this->isValidDay($day)) {
+            return false;
+        }
+
+        return $day;
     }
 }

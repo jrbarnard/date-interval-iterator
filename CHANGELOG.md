@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Errors in readme.md
 - Weekly interval accepts constructor arguments
+- Weekly interval add magic every{day} method
+- Add BadMethodCallException for use by __call
+- Weekly interval add magic andEvery{day} method
 
 ## v1.0.0
 ### Added
