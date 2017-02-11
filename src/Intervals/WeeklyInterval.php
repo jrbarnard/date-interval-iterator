@@ -4,11 +4,23 @@ namespace JRBarnard\Recurrence\Intervals;
 use DateTime;
 use DateInterval;
 use JRBarnard\Recurrence\DateHelper;
+use JRBarnard\Recurrence\Exceptions\BadMethodCallException;
 use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
 
 /**
  * Class WeeklyInterval
+ *
  * @package JRBarnard\Recurrence\Intervals
+ *
+ * Available magic methods:
+ *
+ * @method everyMonday
+ * @method everyTuesday
+ * @method everyWednesday
+ * @method everyThursday
+ * @method everyFriday
+ * @method everySaturday
+ * @method everySunday
  */
 class WeeklyInterval implements IntervalInterface
 {
@@ -70,7 +82,7 @@ class WeeklyInterval implements IntervalInterface
         // Loop over the days passed in and verify all are valid
         $daysToSet = [];
         foreach ($days as $day) {
-            if (!in_array($day, self::DAYS_OF_WEEK, true)) {
+            if (!$this->isValidDay($day)) {
                 throw new InvalidArgumentException($exceptionMessage);
             }
 
@@ -85,6 +97,20 @@ class WeeklyInterval implements IntervalInterface
         $this->days = $daysToSet;
 
         return $this;
+    }
+
+    /**
+     * @param $day
+     *
+     * @return bool
+     */
+    protected function isValidDay($day)
+    {
+        if (in_array($day, self::DAYS_OF_WEEK, true)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -171,5 +197,29 @@ class WeeklyInterval implements IntervalInterface
         }
 
         return $occurrence;
+    }
+
+    /**
+     * @param $name
+     * @param $arguments
+     *
+     * @return mixed
+     */
+    public function __call($name, $arguments)
+    {
+        $everyPrefix = 'every';
+
+        // Magic call to every{day} methods
+        if (false !== strpos($name, $everyPrefix, 0)) {
+            // Get the latter part of the name, see if exists as a constant
+            $day = strtoupper(substr($name, strlen($everyPrefix)));
+            if (defined('self::' . $day) && $this->isValidDay($day = constant('self::' . $day))) {
+                $this->setDays($day);
+
+                return $this;
+            }
+        }
+
+        throw new BadMethodCallException('Call to undefined method {' . __CLASS__ . '}::{' . $name . '}()');
     }
 }

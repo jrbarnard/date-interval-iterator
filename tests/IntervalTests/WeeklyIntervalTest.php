@@ -2,6 +2,7 @@
 
 use JRBarnard\Recurrence\Intervals\WeeklyInterval;
 use JRBarnard\Recurrence\Intervals\IntervalInterface;
+use JRBarnard\Recurrence\Exceptions\BadMethodCallException;
 use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
 
 /**
@@ -26,12 +27,55 @@ class WeeklyIntervalTest extends TestCase
     // Find next occurrence will work with relevant set days and weeks - done
     // Can run backwards - done
     // Can use magic setters and helper setters
-    //  - everyTuesday, everyWednesday will overwrite
+    //  - everyTuesday, everyWednesday will overwrite - done
+    //  - Will throw exception if non existent day - done
     //  - everyTuesday andEveryWednesday will append
     //  - call andEveryWednesday twice will not add twice
     //  - ofEvery3rdWeek, ofEveryWeek,
     //  - ofEveryWeek will accept number of weeks
     //  - TODO: MORE
+
+    /** @test */
+    public function calling_invalid_magic_setter_name_will_throw_exception()
+    {
+        $interval = $this->generateWeeklyInterval();
+
+        $this->expectException(BadMethodCallException::class);
+        $this->expectExceptionMessage('Call to undefined method {' . self::INTERVAL_CLASS . '}::{everyNever}()');
+        $interval->everyNever();
+    }
+
+    /** @test */
+    public function calling_magic_every_setter_twice_will_override()
+    {
+        $interval = $this->generateWeeklyInterval();
+
+        $interval->everyWednesday();
+
+        $this->assertEquals([IntervalInterface::WEDNESDAY], $interval->getDays());
+
+        $interval->everySunday();
+
+        $this->assertEquals([IntervalInterface::SUNDAY], $interval->getDays());
+    }
+
+    /**
+     * @dataProvider magicWeekSetterProvider
+     * @test
+     *
+     * @param $methodName
+     * @param $result
+     */
+    public function magic_setter_every_will_use_name_in_method_to_set_day($methodName, $result)
+    {
+        $interval = $this->generateWeeklyInterval();
+
+        $return = $interval->$methodName();
+
+        $this->assertInstanceOf(self::INTERVAL_CLASS, $return);
+
+        $this->assertEquals([$result], $interval->getDays());
+    }
 
     /** @test */
     public function interval_construtor_will_call_set_weeks_and_set_days()
@@ -285,6 +329,43 @@ class WeeklyIntervalTest extends TestCase
     /**
      * HELPERS & PROVIDERS
      */
+
+    /**
+     * @return array
+     */
+    public function magicWeekSetterProvider()
+    {
+        return [
+            [
+                'everyMonday',
+                IntervalInterface::MONDAY
+            ],
+            [
+                'everyTuesday',
+                IntervalInterface::TUESDAY
+            ],
+            [
+                'everyWednesday',
+                IntervalInterface::WEDNESDAY
+            ],
+            [
+                'everyThursday',
+                IntervalInterface::THURSDAY
+            ],
+            [
+                'everyFriday',
+                IntervalInterface::FRIDAY
+            ],
+            [
+                'everySaturday',
+                IntervalInterface::SATURDAY
+            ],
+            [
+                'everySunday',
+                IntervalInterface::SUNDAY
+            ]
+        ];
+    }
 
     /**
      * @return array

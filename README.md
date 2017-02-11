@@ -142,11 +142,13 @@ and Wednesday of every 3rd week.
 // Basic usage via constructor
 new WeeklyInterval([WeeklyInterval::WEDNESDAY, WeeklyInterval::TUESDAY], 3);
 
+// Standard setters
+$interval = new WeeklyInterval();
+$interval->setDays([WeeklyInterval::TUESDAY, WeeklyInterval::WEDNESDAY]);
+$interval->setWeeks(3);
+
 // Magic setters
 (new WeeklyInterval())->everyTuesday()->andEveryWednesday()->ofEvery3rdWeek();
-
-// Standard setters
-(new WeeklyInterval())->every([WeeklyInterval::TUESDAY, WeeklyInterval::WEDNESDAY])->ofEveryWeek(3);
 ```
 * MonthlyInterval - Accepts days of the week and the monthly occurrence, so you can do intervals such as: the last 
 Wednesday and Thursday of every other month. - COMING SOON
@@ -154,11 +156,15 @@ Wednesday and Thursday of every other month. - COMING SOON
 // Basic usage via constructor
 new MonthlyInterval(MonthlyInterval::LAST, [MonthlyInterval::WEDNESDAY, MonthlyInterval::THURSDAY], 2);
 
-// Magic setters
-(new MonthlyInterval())->everyLast()->wednesday()->andThursday()->ofEvery2ndMonth();
-
 // Standard setters
+$interval = new MonthlyInterval();
+$interval->setDays([MonthlyInterval::WEDNESDAY, MonthlyInterval::THURSDAY]);
+$interval->setFrequency(MonthlyInterval::LAST);
+$interval->setMonths(2);
+
+// Magic setters
 (new MonthlyInterval())->every(MonthlyInterval::LAST, [MonthlyInterval::WEDNESDAY, MonthlyInterval::THURSDAY])->ofEveryMonth(2);
+(new MonthlyInterval())->everyLast()->wednesday()->andThursday()->ofEvery2ndMonth();
 ```
 
 ### Iterator ###
@@ -231,7 +237,7 @@ $iterator->getEndAfter();
 $iterator->setMaxOccurrences(20);
 
 // If you now try and set an end after over the max it will throw an exception
-// If you set an end after to a date, it wil stop iterating either when it reaches that date or the max occurrences,
+// If you set an end after to a date, it wil; stop iterating either when it reaches that date or the max occurrences,
 // whichever occurs first.
 ```
 * You can set a direction for the iterator, so you can get the say every last Wednesday of every month from now, back 2
@@ -244,10 +250,6 @@ before returning:
 ```php
 $iterator->getOccurrences();
 // Will return an instance of Occurrences
-```
-* You can also run iterators in reverse by setting a direction:
-```php
-$iterator->setDirection(IntervalInterface::BACKWARDS);
 ```
 
 ## <a name=contrib>Contributing</a> ##
