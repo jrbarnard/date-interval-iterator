@@ -89,9 +89,9 @@ just must implement the IntervalInterface.
 E.g:
 ```php
 
-use JRBarnard\DateIntervalIterator\Intervals\IntervalInterface;
+use JRBarnard\Reccurrence\Intervals\IntervalInterface;
 
-class ExampleInterface implements IntervalInterface
+class ExampleInterval implements IntervalInterface
 {
     /**
      * Method that finds the next occurrence of the interval from current

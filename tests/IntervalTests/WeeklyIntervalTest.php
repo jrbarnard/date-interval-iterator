@@ -1,6 +1,7 @@
 <?php
 
 use JRBarnard\Recurrence\Intervals\WeeklyInterval;
+use JRBarnard\Recurrence\Intervals\IntervalInterface;
 use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
 
 /**
@@ -11,7 +12,7 @@ class WeeklyIntervalTest extends TestCase
     const INTERVAL_CLASS = WeeklyInterval::class;
 
     // Tests:
-    // Interval constructor will call setDays and setWeeks
+    // Interval constructor will call setDays and setWeeks - done
     // setDays accepts valid days of the week - done
     // setDays accepts either single day of the week or array - done
     // setDays will return interval - done
@@ -31,6 +32,39 @@ class WeeklyIntervalTest extends TestCase
     //  - ofEvery3rdWeek, ofEveryWeek,
     //  - ofEveryWeek will accept number of weeks
     //  - TODO: MORE
+
+    /** @test */
+    public function interval_construtor_will_call_set_weeks_and_set_days()
+    {
+        $className = self::INTERVAL_CLASS;
+        $weeks = 10;
+        $days = [
+            IntervalInterface::TUESDAY,
+            IntervalInterface::WEDNESDAY
+        ];
+
+        // Get mock, without the constructor being called
+        $mock = $this->getMockBuilder($className)
+            ->disableOriginalConstructor()
+            ->setMethods([
+                'setDays',
+                'setWeeks'
+            ])
+            ->getMockForAbstractClass();
+
+        // set expectations for constructor calls
+        $mock->expects($this->once())
+            ->method('setDays')
+            ->with($days);
+        $mock->expects($this->once())
+            ->method('setWeeks')
+            ->with($weeks);
+
+        // now call the constructor
+        $reflectedClass = new ReflectionClass($className);
+        $constructor = $reflectedClass->getConstructor();
+        $constructor->invoke($mock, $days, $weeks);
+    }
 
     /** @test */
     public function if_set_same_days_will_only_set_once()

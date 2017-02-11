@@ -23,6 +23,18 @@ class WeeklyInterval implements IntervalInterface
     protected $weeks = 1;
 
     /**
+     * WeeklyInterval constructor.
+     *
+     * @param array $days
+     * @param int $weeks
+     */
+    public function __construct($days = [], $weeks = 1)
+    {
+        $this->setDays($days);
+        $this->setWeeks($weeks);
+    }
+
+    /**
      * @param int $weeks
      *
      * @return $this
