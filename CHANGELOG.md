@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Weekly interval add magic every{day} method
 - Add BadMethodCallException for use by __call
 - Weekly interval add magic andEvery{day} method
+- Weekly interval add ofEveryWeek setters
+- Weekly interval add ofEvery{weeks}Week magic setter
 
 ## v1.0.0
 ### Added

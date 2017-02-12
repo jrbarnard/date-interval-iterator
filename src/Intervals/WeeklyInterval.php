@@ -227,6 +227,8 @@ class WeeklyInterval implements IntervalInterface
     {
         $everyPrefix = 'every';
         $andEveryPrefix = 'andEvery';
+        $ofEveryPrefix = 'ofEvery';
+        $ofEverySuffix = 'Week';
 
         // Magic call to every{day} methods
         if (false !== strpos($name, $everyPrefix, 0)) {
@@ -243,6 +245,22 @@ class WeeklyInterval implements IntervalInterface
             $day = $this->getDayFromMethod($name, $andEveryPrefix);
             if (false !== $day) {
                 $this->setDays(array_merge($this->getDays(), [$day]));
+
+                return $this;
+            }
+        }
+
+        // Magic call to ofEvery{week}Week methods
+        $ofEveryPrefixLen = strlen($ofEveryPrefix);
+        $ofEverySuffixLen = strlen($ofEverySuffix);
+
+        // Starts with ofEvery, ends with Week
+        if (false !== strpos($name, $ofEveryPrefix) && $ofEverySuffix === substr($name, -1 * $ofEverySuffixLen)) {
+            // Get the bit in between and cast (relies on php's internal type juggling)
+            $weeks = (int) substr($name, $ofEveryPrefixLen, -1 * $ofEverySuffixLen);
+
+            if ($weeks > 0) {
+                $this->ofEveryWeek($weeks);
 
                 return $this;
             }

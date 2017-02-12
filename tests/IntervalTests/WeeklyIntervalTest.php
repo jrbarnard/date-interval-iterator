@@ -32,10 +32,38 @@ class WeeklyIntervalTest extends TestCase
     //  - everyTuesday andEveryWednesday will append - done
     //  - andEvery will throw if invalid day - done
     //  - call andEveryWednesday twice will not add twice - done
-    //  - ofEvery3rdWeek, ofEveryWeek,
+    //  - ofEvery3rdWeek, ofEveryWeek, - done
     //  - ofEveryWeek will accept number of weeks - done
+    //  - ofEvery{week}Week will throw if invalid - done
     //  - Test all together and getting correct occurrence
-    //  - TODO: MORE
+
+    /** @test */
+    public function ofEveryWeek_magic_will_throw_if_invalid_weeks()
+    {
+        $interval = $this->generateWeeklyInterval([IntervalInterface::MONDAY], 2);
+
+        $this->expectException(BadMethodCallException::class);
+        $this->expectExceptionMessage('Call to undefined method {' . self::INTERVAL_CLASS . '}::{ofEveryhaljdaldkWeek}()');
+        $interval->ofEveryhaljdaldkWeek();
+    }
+
+    /**
+     * @dataProvider magicOfEveryWeekProvider
+     * @test
+     *
+     * @param $methodName
+     * @param $expectedWeeks
+     */
+    public function ofEveryWeek_will_accept_number_as_part_of_method_name($methodName, $expectedWeeks)
+    {
+        $interval = $this->generateWeeklyInterval([IntervalInterface::MONDAY], 2);
+
+        $return = $interval->$methodName();
+
+        $this->assertInstanceOf(self::INTERVAL_CLASS, $return);
+
+        $this->assertEquals($expectedWeeks, $interval->getWeeks());
+    }
 
     /** @test */
     public function ofEveryWeek_will_set_number_of_weeks_pass_through_to_set_weeks_defaults_to_one()
@@ -68,6 +96,19 @@ class WeeklyIntervalTest extends TestCase
         // Won't duplicate
         $interval->andEveryWednesday();
         $this->assertEquals([IntervalInterface::WEDNESDAY, IntervalInterface::FRIDAY], $interval->getDays());
+    }
+
+    /**
+     * Test added to cover check within the magic caller that checks the day is a valid day after checking the constant
+     * is defined, so we use another valid constant that is not a day to test.
+     * @test */
+    public function andEvery_magic_method_will_throw_if_pass_direction_constant()
+    {
+        $interval = $this->generateWeeklyInterval();
+
+        $this->expectException(BadMethodCallException::class);
+        $this->expectExceptionMessage('Call to undefined method {' . self::INTERVAL_CLASS . '}::{andEveryDirections}()');
+        $interval->andEveryDirections();
     }
 
     /** @test */
@@ -398,6 +439,39 @@ class WeeklyIntervalTest extends TestCase
     /**
      * HELPERS & PROVIDERS
      */
+
+    /**
+     * @return array
+     */
+    public function magicOfEveryWeekProvider()
+    {
+        return [
+            [
+                'ofEvery1stWeek',
+                1
+            ],
+            [
+                'ofEvery2ndWeek',
+                2
+            ],
+            [
+                'ofEvery3rdWeek',
+                3
+            ],
+            [
+                'ofEvery4thWeek',
+                4
+            ],
+            [
+                'ofEvery10thWeek',
+                10
+            ],
+            [
+                'ofEvery21stWeek',
+                21
+            ],
+        ];
+    }
 
     /**
      * @return array
