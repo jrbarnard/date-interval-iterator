@@ -4,11 +4,31 @@ namespace JRBarnard\Recurrence\Intervals;
 use DateTime;
 use DateInterval;
 use JRBarnard\Recurrence\DateHelper;
+use JRBarnard\Recurrence\Exceptions\BadMethodCallException;
 use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
 
 /**
  * Class WeeklyInterval
+ *
  * @package JRBarnard\Recurrence\Intervals
+ *
+ * Available magic methods:
+ *
+ * @method everyMonday
+ * @method everyTuesday
+ * @method everyWednesday
+ * @method everyThursday
+ * @method everyFriday
+ * @method everySaturday
+ * @method everySunday
+ *
+ * @method andEveryMonday
+ * @method andEveryTuesday
+ * @method andEveryWednesday
+ * @method andEveryThursday
+ * @method andEveryFriday
+ * @method andEverySaturday
+ * @method andEverySunday
  */
 class WeeklyInterval implements IntervalInterface
 {
@@ -21,6 +41,18 @@ class WeeklyInterval implements IntervalInterface
      * @var int
      */
     protected $weeks = 1;
+
+    /**
+     * WeeklyInterval constructor.
+     *
+     * @param array $days
+     * @param int $weeks
+     */
+    public function __construct($days = [], $weeks = 1)
+    {
+        $this->setDays($days);
+        $this->setWeeks($weeks);
+    }
 
     /**
      * @param int $weeks
@@ -58,7 +90,7 @@ class WeeklyInterval implements IntervalInterface
         // Loop over the days passed in and verify all are valid
         $daysToSet = [];
         foreach ($days as $day) {
-            if (!in_array($day, self::DAYS_OF_WEEK, true)) {
+            if (!$this->isValidDay($day)) {
                 throw new InvalidArgumentException($exceptionMessage);
             }
 
@@ -73,6 +105,20 @@ class WeeklyInterval implements IntervalInterface
         $this->days = $daysToSet;
 
         return $this;
+    }
+
+    /**
+     * @param $day
+     *
+     * @return bool
+     */
+    protected function isValidDay($day)
+    {
+        if (in_array($day, self::DAYS_OF_WEEK, true)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -159,5 +205,90 @@ class WeeklyInterval implements IntervalInterface
         }
 
         return $occurrence;
+    }
+
+    /**
+     * @param int $weeks
+     *
+     * @return WeeklyInterval
+     */
+    public function ofEveryWeek($weeks = 1)
+    {
+        return $this->setWeeks($weeks);
+    }
+
+    /**
+     * @param $name
+     * @param $arguments
+     *
+     * @return mixed
+     */
+    public function __call($name, $arguments)
+    {
+        $everyPrefix = 'every';
+        $andEveryPrefix = 'andEvery';
+        $ofEveryPrefix = 'ofEvery';
+        $ofEverySuffix = 'Week';
+
+        // Magic call to every{day} methods
+        if (false !== strpos($name, $everyPrefix, 0)) {
+            $day = $this->getDayFromMethod($name, $everyPrefix);
+            if (false !== $day) {
+                $this->setDays($day);
+
+                return $this;
+            }
+        }
+
+        // Magic call to andEvery{day} methods
+        if (false !== strpos($name, $andEveryPrefix, 0)) {
+            $day = $this->getDayFromMethod($name, $andEveryPrefix);
+            if (false !== $day) {
+                $this->setDays(array_merge($this->getDays(), [$day]));
+
+                return $this;
+            }
+        }
+
+        // Magic call to ofEvery{week}Week methods
+        $ofEveryPrefixLen = strlen($ofEveryPrefix);
+        $ofEverySuffixLen = strlen($ofEverySuffix);
+
+        // Starts with ofEvery, ends with Week
+        if (false !== strpos($name, $ofEveryPrefix) && $ofEverySuffix === substr($name, -1 * $ofEverySuffixLen)) {
+            // Get the bit in between and cast (relies on php's internal type juggling)
+            $weeks = (int) substr($name, $ofEveryPrefixLen, -1 * $ofEverySuffixLen);
+
+            if ($weeks > 0) {
+                $this->ofEveryWeek($weeks);
+
+                return $this;
+            }
+        }
+
+        throw new BadMethodCallException('Call to undefined method {' . __CLASS__ . '}::{' . $name . '}()');
+    }
+
+    /**
+     * @param $methodName
+     * @param $prefix
+     *
+     * @return bool|int
+     */
+    protected function getDayFromMethod($methodName, $prefix)
+    {
+        $day = strtoupper(substr($methodName, strlen($prefix)));
+
+        if (!defined('self::' . $day)) {
+            return false;
+        }
+
+        $day = constant('self::' . $day);
+
+        if (!$this->isValidDay($day)) {
+            return false;
+        }
+
+        return $day;
     }
 }

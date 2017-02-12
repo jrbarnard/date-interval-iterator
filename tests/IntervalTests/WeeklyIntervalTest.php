@@ -1,6 +1,8 @@
 <?php
 
 use JRBarnard\Recurrence\Intervals\WeeklyInterval;
+use JRBarnard\Recurrence\Intervals\IntervalInterface;
+use JRBarnard\Recurrence\Exceptions\BadMethodCallException;
 use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
 
 /**
@@ -11,7 +13,7 @@ class WeeklyIntervalTest extends TestCase
     const INTERVAL_CLASS = WeeklyInterval::class;
 
     // Tests:
-    // Interval constructor will call setDays and setWeeks
+    // Interval constructor will call setDays and setWeeks - done
     // setDays accepts valid days of the week - done
     // setDays accepts either single day of the week or array - done
     // setDays will return interval - done
@@ -25,12 +27,198 @@ class WeeklyIntervalTest extends TestCase
     // Find next occurrence will work with relevant set days and weeks - done
     // Can run backwards - done
     // Can use magic setters and helper setters
-    //  - everyTuesday, everyWednesday will overwrite
-    //  - everyTuesday andEveryWednesday will append
-    //  - call andEveryWednesday twice will not add twice
-    //  - ofEvery3rdWeek, ofEveryWeek,
-    //  - ofEveryWeek will accept number of weeks
-    //  - TODO: MORE
+    //  - everyTuesday, everyWednesday will overwrite - done
+    //  - Will throw exception if non existent day - done
+    //  - everyTuesday andEveryWednesday will append - done
+    //  - andEvery will throw if invalid day - done
+    //  - call andEveryWednesday twice will not add twice - done
+    //  - ofEvery3rdWeek, ofEveryWeek, - done
+    //  - ofEveryWeek will accept number of weeks - done
+    //  - ofEvery{week}Week will throw if invalid - done
+    //  - Test all together and getting correct occurrence
+
+    /** @test */
+    public function ofEveryWeek_magic_will_throw_if_invalid_weeks()
+    {
+        $interval = $this->generateWeeklyInterval([IntervalInterface::MONDAY], 2);
+
+        $this->expectException(BadMethodCallException::class);
+        $this->expectExceptionMessage('Call to undefined method {' . self::INTERVAL_CLASS . '}::{ofEveryhaljdaldkWeek}()');
+        $interval->ofEveryhaljdaldkWeek();
+    }
+
+    /**
+     * @dataProvider magicOfEveryWeekProvider
+     * @test
+     *
+     * @param $methodName
+     * @param $expectedWeeks
+     */
+    public function ofEveryWeek_will_accept_number_as_part_of_method_name($methodName, $expectedWeeks)
+    {
+        $interval = $this->generateWeeklyInterval([IntervalInterface::MONDAY], 2);
+
+        $return = $interval->$methodName();
+
+        $this->assertInstanceOf(self::INTERVAL_CLASS, $return);
+
+        $this->assertEquals($expectedWeeks, $interval->getWeeks());
+    }
+
+    /** @test */
+    public function ofEveryWeek_will_set_number_of_weeks_pass_through_to_set_weeks_defaults_to_one()
+    {
+        $interval = $this->generateWeeklyInterval([IntervalInterface::MONDAY], 2);
+        $weeks = 4;
+
+        $return = $interval->ofEveryWeek();
+
+        $this->assertInstanceOf(self::INTERVAL_CLASS, $return);
+
+        $this->assertEquals(1, $interval->getWeeks());
+
+        $interval->ofEveryWeek($weeks);
+        $this->assertEquals($weeks, $interval->getWeeks());
+    }
+
+    /** @test */
+    public function andEvery_magic_method_will_append_onto_existing_days()
+    {
+        $interval = $this->generateWeeklyInterval();
+
+        $interval->everyWednesday();
+
+        $this->assertEquals([IntervalInterface::WEDNESDAY], $interval->getDays());
+
+        $interval->andEveryFriday();
+        $this->assertEquals([IntervalInterface::WEDNESDAY, IntervalInterface::FRIDAY], $interval->getDays());
+
+        // Won't duplicate
+        $interval->andEveryWednesday();
+        $this->assertEquals([IntervalInterface::WEDNESDAY, IntervalInterface::FRIDAY], $interval->getDays());
+    }
+
+    /**
+     * Test added to cover check within the magic caller that checks the day is a valid day after checking the constant
+     * is defined, so we use another valid constant that is not a day to test.
+     * @test */
+    public function andEvery_magic_method_will_throw_if_pass_direction_constant()
+    {
+        $interval = $this->generateWeeklyInterval();
+
+        $this->expectException(BadMethodCallException::class);
+        $this->expectExceptionMessage('Call to undefined method {' . self::INTERVAL_CLASS . '}::{andEveryDirections}()');
+        $interval->andEveryDirections();
+    }
+
+    /** @test */
+    public function andEvery_magic_method_will_throw_if_invalid_day()
+    {
+        $interval = $this->generateWeeklyInterval();
+
+        $this->expectException(BadMethodCallException::class);
+        $this->expectExceptionMessage('Call to undefined method {' . self::INTERVAL_CLASS . '}::{andEveryNever}()');
+        $interval->andEveryNever();
+    }
+
+    /**
+     * @dataProvider magicAndEveryMethodProvider
+     * @test
+     *
+     * @param $method
+     * @param $expected
+     */
+    public function andEvery_magic_method_will_set_days($method, $expected)
+    {
+        $interval = $this->generateWeeklyInterval();
+
+        // Remove days to start with
+        $class = new ReflectionObject($interval);
+        $property = $class->getProperty('days');
+        $property->setAccessible(true);
+        $property->setValue($interval, []);
+
+        $return = $interval->$method();
+
+        $this->assertInstanceOf(self::INTERVAL_CLASS, $return);
+
+        $this->assertEquals([$expected], $interval->getDays());
+    }
+
+    /** @test */
+    public function calling_invalid_magic_setter_name_will_throw_exception()
+    {
+        $interval = $this->generateWeeklyInterval();
+
+        $this->expectException(BadMethodCallException::class);
+        $this->expectExceptionMessage('Call to undefined method {' . self::INTERVAL_CLASS . '}::{everyNever}()');
+        $interval->everyNever();
+    }
+
+    /** @test */
+    public function calling_magic_every_setter_twice_will_override()
+    {
+        $interval = $this->generateWeeklyInterval();
+
+        $interval->everyWednesday();
+
+        $this->assertEquals([IntervalInterface::WEDNESDAY], $interval->getDays());
+
+        $interval->everySunday();
+
+        $this->assertEquals([IntervalInterface::SUNDAY], $interval->getDays());
+    }
+
+    /**
+     * @dataProvider magicWeekSetterProvider
+     * @test
+     *
+     * @param $methodName
+     * @param $result
+     */
+    public function magic_setter_every_will_use_name_in_method_to_set_day($methodName, $result)
+    {
+        $interval = $this->generateWeeklyInterval();
+
+        $return = $interval->$methodName();
+
+        $this->assertInstanceOf(self::INTERVAL_CLASS, $return);
+
+        $this->assertEquals([$result], $interval->getDays());
+    }
+
+    /** @test */
+    public function interval_construtor_will_call_set_weeks_and_set_days()
+    {
+        $className = self::INTERVAL_CLASS;
+        $weeks = 10;
+        $days = [
+            IntervalInterface::TUESDAY,
+            IntervalInterface::WEDNESDAY
+        ];
+
+        // Get mock, without the constructor being called
+        $mock = $this->getMockBuilder($className)
+            ->disableOriginalConstructor()
+            ->setMethods([
+                'setDays',
+                'setWeeks'
+            ])
+            ->getMockForAbstractClass();
+
+        // set expectations for constructor calls
+        $mock->expects($this->once())
+            ->method('setDays')
+            ->with($days);
+        $mock->expects($this->once())
+            ->method('setWeeks')
+            ->with($weeks);
+
+        // now call the constructor
+        $reflectedClass = new ReflectionClass($className);
+        $constructor = $reflectedClass->getConstructor();
+        $constructor->invoke($mock, $days, $weeks);
+    }
 
     /** @test */
     public function if_set_same_days_will_only_set_once()
@@ -251,6 +439,113 @@ class WeeklyIntervalTest extends TestCase
     /**
      * HELPERS & PROVIDERS
      */
+
+    /**
+     * @return array
+     */
+    public function magicOfEveryWeekProvider()
+    {
+        return [
+            [
+                'ofEvery1stWeek',
+                1
+            ],
+            [
+                'ofEvery2ndWeek',
+                2
+            ],
+            [
+                'ofEvery3rdWeek',
+                3
+            ],
+            [
+                'ofEvery4thWeek',
+                4
+            ],
+            [
+                'ofEvery10thWeek',
+                10
+            ],
+            [
+                'ofEvery21stWeek',
+                21
+            ],
+        ];
+    }
+
+    /**
+     * @return array
+     */
+    public function magicAndEveryMethodProvider()
+    {
+        return [
+            [
+                'andEveryMonday',
+                IntervalInterface::MONDAY
+            ],
+            [
+                'andEveryTuesday',
+                IntervalInterface::TUESDAY
+            ],
+            [
+                'andEveryWednesday',
+                IntervalInterface::WEDNESDAY
+            ],
+            [
+                'andEveryThursday',
+                IntervalInterface::THURSDAY
+            ],
+            [
+                'andEveryFriday',
+                IntervalInterface::FRIDAY
+            ],
+            [
+                'andEverySaturday',
+                IntervalInterface::SATURDAY
+            ],
+            [
+                'andEverySunday',
+                IntervalInterface::SUNDAY
+            ]
+        ];
+    }
+
+    /**
+     * @return array
+     */
+    public function magicWeekSetterProvider()
+    {
+        return [
+            [
+                'everyMonday',
+                IntervalInterface::MONDAY
+            ],
+            [
+                'everyTuesday',
+                IntervalInterface::TUESDAY
+            ],
+            [
+                'everyWednesday',
+                IntervalInterface::WEDNESDAY
+            ],
+            [
+                'everyThursday',
+                IntervalInterface::THURSDAY
+            ],
+            [
+                'everyFriday',
+                IntervalInterface::FRIDAY
+            ],
+            [
+                'everySaturday',
+                IntervalInterface::SATURDAY
+            ],
+            [
+                'everySunday',
+                IntervalInterface::SUNDAY
+            ]
+        ];
+    }
 
     /**
      * @return array
