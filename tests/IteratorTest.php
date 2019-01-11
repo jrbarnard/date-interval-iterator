@@ -7,6 +7,7 @@ use TypeError;
 use DateInterval;
 use ReflectionClass;
 use ReflectionObject;
+use PHPUnit_Framework_Error;
 use JRBarnard\Recurrence\Occurrences;
 use JRBarnard\Recurrence\Intervals\IntervalInterface;
 use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
