@@ -1,12 +1,14 @@
 <?php
+namespace JRBarnard\RecurrenceTests;
 
+use DateTime;
 use JRBarnard\Recurrence\Iterator;
 use JRBarnard\Recurrence\Intervals\IntervalInterface;
 
 /**
  * Class TestCase
  */
-class TestCase extends PHPUnit_Framework_TestCase
+class TestCase extends \PHPUnit_Framework_TestCase
 {
     /**
      * Extracted to a const just in case is changed during development

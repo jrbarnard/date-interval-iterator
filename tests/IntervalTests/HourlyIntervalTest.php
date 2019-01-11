@@ -1,5 +1,12 @@
 <?php
+namespace JRBarnard\RecurrenceTests\IntervalTests;
 
+use stdClass;
+use DateTime;
+use DateInterval;
+use ReflectionClass;
+use ReflectionObject;
+use JRBarnard\RecurrenceTests\TestCase;
 use JRBarnard\Recurrence\Intervals\HourlyInterval;
 use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
 use JRBarnard\Recurrence\Intervals\IntervalInterface;

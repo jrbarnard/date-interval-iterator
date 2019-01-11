@@ -1,5 +1,12 @@
 <?php
+namespace JRBarnard\RecurrenceTests;
 
+use stdClass;
+use DateTime;
+use TypeError;
+use DateInterval;
+use ReflectionClass;
+use ReflectionObject;
 use JRBarnard\Recurrence\Occurrences;
 use JRBarnard\Recurrence\Intervals\IntervalInterface;
 use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;

@@ -1,4 +1,7 @@
 <?php
+namespace JRBarnard\RecurrenceTests;
+
+use DateTime;
 use JRBarnard\Recurrence\DateHelper;
 use JRBarnard\Recurrence\Intervals\IntervalInterface;
 

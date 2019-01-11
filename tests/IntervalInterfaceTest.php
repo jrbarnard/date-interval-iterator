@@ -1,5 +1,7 @@
 <?php
+namespace JRBarnard\RecurrenceTests;
 
+use DateTime;
 use JRBarnard\Recurrence\Intervals\IntervalInterface;
 
 /**
@@ -14,13 +16,13 @@ class IntervalInterfaceTest extends TestCase
     /** @test */
     public function has_days_of_week_constant_group_and_weekday_helper()
     {
-        $this->assertTrue(defined('InterfaceTestImplementation::MONDAY'));
-        $this->assertTrue(defined('InterfaceTestImplementation::TUESDAY'));
-        $this->assertTrue(defined('InterfaceTestImplementation::WEDNESDAY'));
-        $this->assertTrue(defined('InterfaceTestImplementation::THURSDAY'));
-        $this->assertTrue(defined('InterfaceTestImplementation::FRIDAY'));
-        $this->assertTrue(defined('InterfaceTestImplementation::SATURDAY'));
-        $this->assertTrue(defined('InterfaceTestImplementation::SUNDAY'));
+        $this->assertTrue(defined(InterfaceTestImplementation::class . '::MONDAY'));
+        $this->assertTrue(defined(InterfaceTestImplementation::class . '::TUESDAY'));
+        $this->assertTrue(defined(InterfaceTestImplementation::class . '::WEDNESDAY'));
+        $this->assertTrue(defined(InterfaceTestImplementation::class . '::THURSDAY'));
+        $this->assertTrue(defined(InterfaceTestImplementation::class . '::FRIDAY'));
+        $this->assertTrue(defined(InterfaceTestImplementation::class . '::SATURDAY'));
+        $this->assertTrue(defined(InterfaceTestImplementation::class . '::SUNDAY'));
 
         $this->assertTrue(is_int(InterfaceTestImplementation::MONDAY));
         $this->assertTrue(is_int(InterfaceTestImplementation::TUESDAY));
@@ -55,9 +57,9 @@ class IntervalInterfaceTest extends TestCase
     /** @test */
     public function has_direction_constants_and_wrapper()
     {
-        $this->assertTrue(defined('InterfaceTestImplementation::FORWARDS'));
-        $this->assertTrue(defined('InterfaceTestImplementation::BACKWARDS'));
-        $this->assertTrue(defined('InterfaceTestImplementation::DIRECTIONS'));
+        $this->assertTrue(defined(InterfaceTestImplementation::class . '::FORWARDS'));
+        $this->assertTrue(defined(InterfaceTestImplementation::class . '::BACKWARDS'));
+        $this->assertTrue(defined(InterfaceTestImplementation::class . '::DIRECTIONS'));
 
         // Check valid types
         $this->assertTrue(is_int(InterfaceTestImplementation::FORWARDS));

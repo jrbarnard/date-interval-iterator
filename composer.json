@@ -20,11 +20,13 @@
         "squizlabs/php_codesniffer": "2.*"
     },
     "autoload": {
-        "classmap": [
-            "tests/TestCase.php"
-        ],
         "psr-4": {
             "JRBarnard\\Recurrence\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "JRBarnard\\RecurrenceTests\\": "tests/"
         }
     },
     "scripts": {
