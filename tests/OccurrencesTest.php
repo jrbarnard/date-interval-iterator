@@ -1,12 +1,15 @@
 <?php
+namespace JRBarnard\RecurrenceTests;
 
+use stdClass;
+use DateTime;
 use JRBarnard\Recurrence\Occurrences;
 use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
 
 /**
  * Class OccurrencesTest
  */
-class OccurrencesTest extends PHPUnit_Framework_TestCase
+class OccurrencesTest extends TestCase
 {
     // Tests:
     //  - Can't set a non datetime as an occurrence (either via offsetSet or push) - done

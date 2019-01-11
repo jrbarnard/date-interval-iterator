@@ -51,6 +51,16 @@ interface IntervalInterface
         self::SATURDAY
     ];
 
+    const DAYS_OF_WEEK_MAP = [
+        IntervalInterface::SUNDAY => 'sunday',
+        IntervalInterface::MONDAY => 'monday',
+        IntervalInterface::TUESDAY => 'tuesday',
+        IntervalInterface::WEDNESDAY => 'wednesday',
+        IntervalInterface::THURSDAY => 'thursday',
+        IntervalInterface::FRIDAY => 'friday',
+        IntervalInterface::SATURDAY => 'saturday',
+    ];
+
     /**
      * A constant wrapper for just the weekdays
      */

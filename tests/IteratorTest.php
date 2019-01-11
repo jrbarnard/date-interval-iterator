@@ -1,5 +1,13 @@
 <?php
+namespace JRBarnard\RecurrenceTests;
 
+use stdClass;
+use DateTime;
+use TypeError;
+use DateInterval;
+use ReflectionClass;
+use ReflectionObject;
+use PHPUnit_Framework_Error;
 use JRBarnard\Recurrence\Occurrences;
 use JRBarnard\Recurrence\Intervals\IntervalInterface;
 use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
@@ -1275,12 +1283,7 @@ class TenDayInterval implements IntervalInterface
 class OneDayInterval implements IntervalInterface
 {
     /**
-     * Method that finds the next occurrence of the interval from current
-     *
-     * @param DateTime $current
-     * @param int $direction
-     *
-     * @return mixed
+     * @inheritdoc
      */
     public function findNextOccurrence(DateTime $current, $direction = self::FORWARDS)
     {

@@ -1,6 +1,10 @@
 <?php
+namespace JRBarnard\RecurrenceTests;
+
+use DateTime;
 use JRBarnard\Recurrence\DateHelper;
 use JRBarnard\Recurrence\Intervals\IntervalInterface;
+use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
 
 /**
  * Class DateHelperTest
@@ -9,6 +13,36 @@ class DateHelperTest extends TestCase
 {
     // Tests:
     // getDayOfTheWeek will return int representation of day of the week - done
+    // getTextOfDayOfTheWeek will return text of day of the week passed - done
+    // setTimeFrom will set the time of the first datetime with the second - done
+
+    /** @test */
+    public function setTimeFrom_will_set_the_time_of_the_first_datetime_with_the_second()
+    {
+        $setTo = new DateTime('2012-12-12 12:00:00');
+        $setFrom = new DateTime('2019-09-09 23:22:09');
+        $result = DateHelper::setTimeFrom($setTo, $setFrom);
+
+        $this->assertSame($setTo, $result);
+        $this->assertSame('23:22:09', $setTo->format('H:i:s'));
+    }
+
+    /** @test */
+    public function getTextOfDayOfTheWeek_will_throw_if_invalid()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        DateHelper::getTextOfDayOfTheWeek('invalid');
+    }
+
+    /** @test */
+    public function getTextOfDayOfTheWeek_will_return_text_of_passed_day_of_week()
+    {
+        foreach (IntervalInterface::DAYS_OF_WEEK as $day) {
+            $result = DateHelper::getTextOfDayOfTheWeek($day);
+
+            $this->assertSame(IntervalInterface::DAYS_OF_WEEK_MAP[$day], $result);
+        }
+    }
 
     /**
      * @dataProvider dayOfTheWeekProvider

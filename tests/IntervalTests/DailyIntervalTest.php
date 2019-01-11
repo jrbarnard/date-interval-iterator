@@ -1,8 +1,15 @@
 <?php
+namespace JRBarnard\RecurrenceTests\IntervalTests;
 
+use stdClass;
+use DateTime;
+use DateInterval;
+use ReflectionClass;
+use ReflectionObject;
+use JRBarnard\RecurrenceTests\TestCase;
 use JRBarnard\Recurrence\Intervals\DailyInterval;
-use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
 use JRBarnard\Recurrence\Intervals\IntervalInterface;
+use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
 
 /**
  * Class DailyIntervalTest

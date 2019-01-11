@@ -1,5 +1,12 @@
 <?php
+namespace JRBarnard\RecurrenceTests\IntervalTests;
 
+use JRBarnard\Recurrence\Intervals\SetsDays;
+use stdClass;
+use DateTime;
+use ReflectionClass;
+use ReflectionObject;
+use JRBarnard\RecurrenceTests\TestCase;
 use JRBarnard\Recurrence\Intervals\WeeklyInterval;
 use JRBarnard\Recurrence\Intervals\IntervalInterface;
 use JRBarnard\Recurrence\Exceptions\BadMethodCallException;
@@ -14,16 +21,10 @@ class WeeklyIntervalTest extends TestCase
 
     // Tests:
     // Interval constructor will call setDays and setWeeks - done
-    // setDays accepts valid days of the week - done
-    // setDays accepts either single day of the week or array - done
-    // setDays will return interval - done
-    // if set same days via setDays, will only set one - done
-    // all days must be valid days (stored as consts) - will throw if not - done
     // setWeeks accepts an int greater than 0, will store in weeks - done
     // if setWeeks not passed int greater than 0 will throw - done
     // can getWeeks using method, will get set - done
     // can getDays using method, will get set - done
-    // getDays will return sorted days - done
     // Find next occurrence will work with relevant set days and weeks - done
     // Can run backwards - done
     // Can use magic setters and helper setters
@@ -36,6 +37,13 @@ class WeeklyIntervalTest extends TestCase
     //  - ofEveryWeek will accept number of weeks - done
     //  - ofEvery{week}Week will throw if invalid - done
     //  - Test all together and getting correct occurrence
+    // Uses SetsDays trait - done
+
+    /** @test */
+    public function uses_SetsDays_trait()
+    {
+        $this->assertArrayHasKey(SetsDays::class, class_uses(self::INTERVAL_CLASS));
+    }
 
     /** @test */
     public function ofEveryWeek_magic_will_throw_if_invalid_weeks()
@@ -220,65 +228,6 @@ class WeeklyIntervalTest extends TestCase
         $constructor->invoke($mock, $days, $weeks);
     }
 
-    /** @test */
-    public function if_set_same_days_will_only_set_once()
-    {
-        $days = [
-            WeeklyInterval::SATURDAY,
-            WeeklyInterval::SATURDAY,
-            WeeklyInterval::SUNDAY,
-        ];
-
-        $interval = $this->generateWeeklyInterval();
-        $interval->setDays($days);
-
-        // Check not set duplicates
-        $class = new ReflectionObject($interval);
-        $property = $class->getProperty('days');
-        $property->setAccessible(true);
-
-        $actuallySet = $property->getValue($interval);
-        $this->assertCount(2, $actuallySet);
-
-        $alreadySet = [];
-        foreach($actuallySet as $day) {
-            // Fail if we already found it
-            if (in_array($day, $alreadySet)) {
-                $this->fail('Duplicate day found: ' . $day . ' in: ' . json_encode($alreadySet));
-            }
-            $alreadySet[] = $day;
-        }
-    }
-
-    /** @test */
-    public function setDays_will_store_sorted_days()
-    {
-        $days = [
-            WeeklyInterval::SATURDAY, // 6
-            WeeklyInterval::WEDNESDAY, // 3
-            WeeklyInterval::MONDAY, // 1
-            WeeklyInterval::THURSDAY, // 4
-        ];
-
-        $expectedOrder = [
-            WeeklyInterval::MONDAY, // 1
-            WeeklyInterval::WEDNESDAY, // 3
-            WeeklyInterval::THURSDAY, // 4
-            WeeklyInterval::SATURDAY, // 6
-        ];
-
-        $interval = $this->generateWeeklyInterval();
-
-        $interval->setDays($days);
-
-        // Check set in order
-        $class = new ReflectionObject($interval);
-        $property = $class->getProperty('days');
-        $property->setAccessible(true);
-
-        $this->assertSame($expectedOrder, $property->getValue($interval));
-    }
-
     /**
      * @dataProvider findNextOccurrenceBackwardsProvider
      *
@@ -320,17 +269,6 @@ class WeeklyIntervalTest extends TestCase
         $next = $interval->findNextOccurrence($start);
 
         $this->assertSame($expected->getTimestamp(), $next->getTimestamp());
-    }
-
-    /** @test */
-    public function getDays_will_return_set_days()
-    {
-        $interval = $this->generateWeeklyInterval();
-
-        $expected = WeeklyInterval::THURSDAY;
-        $interval->setDays($expected);
-
-        $this->assertSame([$expected], $interval->getDays());
     }
 
     /** @test */
@@ -403,37 +341,6 @@ class WeeklyIntervalTest extends TestCase
         $property->setAccessible(true);
 
         $this->assertSame($expected, $property->getValue($interval));
-    }
-
-    /** @test */
-    public function setDays_accepts_a_single_day_of_the_week()
-    {
-        $interval = $this->generateWeeklyInterval();
-
-        $expected = WeeklyInterval::THURSDAY;
-        $interval->setDays($expected);
-
-        $class = new ReflectionObject($interval);
-        $property = $class->getProperty('days');
-        $property->setAccessible(true);
-
-        $this->assertSame([$expected], $property->getValue($interval));
-    }
-
-    /**
-     * @dataProvider invalidDaysProvider
-     * @test
-     * @param $invalidDays
-     */
-    public function can_set_days_will_only_accept_valid_days_stored_as_consts($invalidDays)
-    {
-        $interval = $this->generateWeeklyInterval();
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage(
-            'You must pass valid days of the week to the interval'
-        );
-        $interval->setDays($invalidDays);
     }
 
     /**
@@ -789,29 +696,6 @@ class WeeklyIntervalTest extends TestCase
             [new stdClass()],
             [-1],
             [0]
-        ];
-    }
-
-    /**
-     * @return array
-     */
-    public function invalidDaysProvider()
-    {
-        return [
-            [99],
-            [-1],
-            [new stdClass()],
-            [[]],
-            ['test'],
-            [true],
-            [false],
-            [[
-                WeeklyInterval::MONDAY,
-                WeeklyInterval::THURSDAY,
-                WeeklyInterval::SUNDAY,
-                99,
-                'test'
-            ]]
         ];
     }
 
