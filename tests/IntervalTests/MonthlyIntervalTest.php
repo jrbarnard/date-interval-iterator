@@ -1,12 +1,14 @@
 <?php
 namespace JRBarnard\RecurrenceTests\IntervalTests;
 
+use DateTime;
 use ReflectionClass;
 use JRBarnard\RecurrenceTests\TestCase;
 use JRBarnard\Recurrence\Intervals\SetsDays;
 use JRBarnard\Recurrence\Intervals\MonthlyInterval;
 use JRBarnard\Recurrence\Intervals\IntervalInterface;
 use JRBarnard\Recurrence\Exceptions\BadMethodCallException;
+use JRBarnard\Recurrence\Exceptions\SkipOccurrenceException;
 use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
 
 /**
@@ -35,10 +37,13 @@ class MonthlyIntervalTest extends TestCase
      *  - getMonths
      *      - will get months set - done
      *      - will default to 1 - done
-     * TODO:
      *  - findNextOccurrence
-     *      - will find next occurrence based on set criteria (using provider with multiple data points)
-     *      - will work backwards
+     *      - will find next occurrence based on set criteria (using provider with multiple data points) - done
+     *      - will work backwards - done
+     *      - if attempt to run when has days but no frequency set throw - done
+     *  - with iterator
+     *      - if forces to end of month, next month which has the valid days will use them - done
+     * TODO:
      *  - every fluent setter
      *      - will accept frequency and days as params and call setFrequency and setDays
      *      - will return self
@@ -63,6 +68,107 @@ class MonthlyIntervalTest extends TestCase
      *      - will pass parsed regularity of months to setMonths
      *      - will return self
      */
+
+    /** @test */
+    public function findNextOccurrence_if_attempt_to_run_when_has_days_but_no_frequency_set_throw()
+    {
+        $interval = new MonthlyInterval();
+
+        $interval->setFrequency(null);
+        $interval->setDays([IntervalInterface::MONDAY]);
+        $interval->setMonths(1);
+
+        $this->expectException(InvalidArgumentException::class);
+        $interval->findNextOccurrence(new DateTime());
+    }
+
+    /** @test */
+    public function with_iterator_if_goes_to_month_max_days_next_iteration_will_have_days_as_expected()
+    {
+        $start = new DateTime('2012-01-30');
+        $interval = new MonthlyInterval();
+        $iterator = $this->generateIterator($start, $interval, 3);
+
+        $expected = [
+            '2012-02-29',
+            '2012-03-30',
+            '2012-04-30'
+        ];
+        $this->assertSame(count($expected), $iterator->count());
+        foreach ($iterator as $index => $occurrence) {
+            $this->assertSame($expected[$index], $occurrence->format('Y-m-d'));
+        }
+    }
+
+    /**
+     * @dataProvider findNextOccurrenceBackwardsProvider
+     * @test
+     *
+     * @param $start
+     * @param $frequency
+     * @param $days
+     * @param $months
+     * @param $expected
+     *
+     * @throws \Exception
+     */
+    public function findNextOccurrence_will_get_next_occurrence_based_on_criteria_set_backwards(
+        $start,
+        $frequency,
+        $days,
+        $months,
+        $expected
+    ) {
+        $interval = new MonthlyInterval();
+
+        $interval->setFrequency($frequency);
+        $interval->setDays($days);
+        $interval->setMonths($months);
+
+        $next = $interval->findNextOccurrence($start, IntervalInterface::BACKWARDS);
+
+        $this->assertSame(
+            $expected->getTimestamp(),
+            $next->getTimestamp(),
+            'Failed asserting that next occurrence (' . $next->format('Y-m-d H:i:s') . '), is the ' .
+            'same as the expected next occurrence (' . $expected->format('Y-m-d H:i:s') . ')'
+        );
+    }
+
+    /**
+     * @dataProvider findNextOccurrenceProvider
+     * @test
+     *
+     * @param $start
+     * @param $frequency
+     * @param $days
+     * @param $months
+     * @param $expected
+     *
+     * @throws \Exception
+     */
+    public function findNextOccurrence_will_get_next_occurrence_based_on_criteria_set(
+        $start,
+        $frequency,
+        $days,
+        $months,
+        $expected
+    ) {
+        $interval = new MonthlyInterval();
+
+        $interval->setFrequency($frequency);
+        $interval->setDays($days);
+        $interval->setMonths($months);
+
+        $next = $interval->findNextOccurrence($start);
+
+        $this->assertSame(
+            $expected->getTimestamp(),
+            $next->getTimestamp(),
+            'Failed asserting that next occurrence (' . $next->format('Y-m-d H:i:s') . '), is the ' .
+            'same as the expected next occurrence (' . $expected->format('Y-m-d H:i:s') . ')'
+        );
+    }
 
     /** @test */
     public function getMonths_will_return_set_months()
@@ -258,6 +364,7 @@ class MonthlyIntervalTest extends TestCase
     public function invalidFrequencyProvider()
     {
         return [
+            [new \stdClass()],
             ['woah!!!'],
             [[]],
             [-11282],
@@ -284,11 +391,673 @@ class MonthlyIntervalTest extends TestCase
         ];
     }
 
-//    protected function generateMonthlyInterval($frequency = null, $days = [], $months = 1)
-//    {
-//        $class = self::INTERVAL_CLASS;
-//
-//        return new $class($frequency, $days, $months);
-//    }
+    /**
+     * @return array
+     * @throws \Exception
+     */
+    public function findNextOccurrenceProvider()
+    {
+        // DateTime start, frequency, days, months, DateTime expected, optional bool startsThisMonth
+        return [
+            // Start with just default month tests
+            [
+                new DateTime('2012-04-19 12:00:00'),
+                null,
+                [],
+                1,
+                new DateTime('2012-05-19 12:00:00'),
+            ],
+            [
+                new DateTime('2012-04-19 12:00:00'),
+                null,
+                [],
+                2,
+                new DateTime('2012-06-19 12:00:00'),
+            ],
+            [
+                new DateTime('2012-04-19 12:00:00'),
+                null,
+                [],
+                3,
+                new DateTime('2012-07-19 12:00:00'),
+            ],
+            [
+                new DateTime('2012-04-19 12:00:00'),
+                null,
+                [],
+                4,
+                new DateTime('2012-08-19 12:00:00'),
+            ],
+            [
+                new DateTime('2012-04-19 12:00:00'),
+                null,
+                [],
+                5,
+                new DateTime('2012-09-19 12:00:00'),
+            ],
+            [
+                new DateTime('2012-04-19 12:00:00'),
+                null,
+                [],
+                6,
+                new DateTime('2012-10-19 12:00:00'),
+            ],
+            [
+                new DateTime('2012-04-19 12:00:00'),
+                null,
+                [],
+                7,
+                new DateTime('2012-11-19 12:00:00'),
+            ],
+            [
+                new DateTime('2012-04-19 12:00:00'),
+                null,
+                [],
+                8,
+                new DateTime('2012-12-19 12:00:00'),
+            ],
+            [
+                new DateTime('2012-04-19 12:00:00'),
+                null,
+                [],
+                9,
+                new DateTime('2013-01-19 12:00:00'),
+            ],
+            [
+                new DateTime('2012-04-19 12:00:00'),
+                null,
+                [],
+                10,
+                new DateTime('2013-02-19 12:00:00'),
+            ],
+            [
+                new DateTime('2012-04-19 12:00:00'),
+                null,
+                [],
+                11,
+                new DateTime('2013-03-19 12:00:00'),
+            ],
+            [
+                new DateTime('2012-04-19 12:00:00'),
+                null,
+                [],
+                12,
+                new DateTime('2013-04-19 12:00:00'),
+            ],
+            // Try a february month test
+            [
+                new DateTime('2012-01-30 12:00:00'),
+                null,
+                [],
+                1,
+                new DateTime('2012-02-29 12:00:00'), // leap year
+            ],
+            [
+                new DateTime('2013-01-30 12:00:00'),
+                null,
+                [],
+                1,
+                new DateTime('2013-02-28 12:00:00'), // non leap
+            ],
+            // Test 2 months
+            [
+                new DateTime('2011-12-30 12:00:00'),
+                null,
+                [],
+                2,
+                new DateTime('2012-02-29 12:00:00'), // leap year
+            ],
+            [
+                new DateTime('2012-12-30 12:00:00'),
+                null,
+                [],
+                2,
+                new DateTime('2013-02-28 12:00:00'), // non leap
+            ],
+            // Add in a frequency and days
+            [
+                new DateTime('2012-04-19 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIRST,
+                [IntervalInterface::TUESDAY],
+                1,
+                new DateTime('2012-05-01 12:00:00'),
+            ],
+            [
+                new DateTime('2012-05-01 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIRST,
+                [IntervalInterface::TUESDAY],
+                1,
+                new DateTime('2012-06-05 12:00:00'),
+            ],
+            // Multiple days
+            [
+                new DateTime('2012-06-06 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIRST,
+                [IntervalInterface::TUESDAY, IntervalInterface::THURSDAY],
+                1,
+                new DateTime('2012-06-07 12:00:00'),
+            ],
+            [
+                new DateTime('2012-06-07 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIRST,
+                [IntervalInterface::TUESDAY, IntervalInterface::THURSDAY],
+                1,
+                new DateTime('2012-07-03 12:00:00'),
+            ],
+            [
+                new DateTime('2012-07-02 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIRST,
+                [IntervalInterface::TUESDAY, IntervalInterface::THURSDAY],
+                1,
+                new DateTime('2012-07-03 12:00:00'),
+            ],
+            [
+                new DateTime('2012-06-06 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIRST,
+                [IntervalInterface::TUESDAY, IntervalInterface::THURSDAY],
+                1,
+                new DateTime('2012-06-07 12:00:00')
+            ],
+            [
+                new DateTime('2012-06-07 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIRST,
+                [IntervalInterface::TUESDAY, IntervalInterface::THURSDAY],
+                1,
+                new DateTime('2012-07-03 12:00:00')
+            ],
+            [
+                new DateTime('2012-07-02 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIRST,
+                [IntervalInterface::TUESDAY, IntervalInterface::THURSDAY],
+                1,
+                new DateTime('2012-07-03 12:00:00')
+            ],
+            [
+                new DateTime('2012-07-05 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIRST,
+                [IntervalInterface::TUESDAY, IntervalInterface::THURSDAY],
+                1,
+                new DateTime('2012-08-02 12:00:00')
+            ],
+            // Second frequency
+            [
+                new DateTime('2012-04-19 12:00:00'),
+                MonthlyInterval::FREQUENCY_SECOND,
+                [IntervalInterface::TUESDAY],
+                1,
+                new DateTime('2012-05-08 12:00:00'),
+            ],
+            [
+                new DateTime('2012-04-09 12:00:00'),
+                MonthlyInterval::FREQUENCY_SECOND,
+                [IntervalInterface::TUESDAY],
+                1,
+                new DateTime('2012-04-10 12:00:00')
+            ],
+            // Third frequency
+            [
+                new DateTime('2012-04-19 12:00:00'),
+                MonthlyInterval::FREQUENCY_THIRD,
+                [IntervalInterface::TUESDAY],
+                1,
+                new DateTime('2012-05-15 12:00:00'),
+            ],
+            [
+                new DateTime('2012-04-15 12:00:00'),
+                MonthlyInterval::FREQUENCY_THIRD,
+                [IntervalInterface::TUESDAY],
+                1,
+                new DateTime('2012-04-17 12:00:00')
+            ],
+            // Fourth frequency
+            [
+                new DateTime('2012-04-19 12:00:00'),
+                MonthlyInterval::FREQUENCY_FOURTH,
+                [IntervalInterface::WEDNESDAY],
+                1,
+                new DateTime('2012-04-25 12:00:00'),
+            ],
+            [
+                new DateTime('2012-04-15 12:00:00'),
+                MonthlyInterval::FREQUENCY_FOURTH,
+                [IntervalInterface::TUESDAY],
+                1,
+                new DateTime('2012-04-24 12:00:00')
+            ],
+            // Fifth frequency
+            [
+                new DateTime('2012-04-19 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIFTH,
+                [IntervalInterface::MONDAY],
+                1,
+                new DateTime('2012-04-30 12:00:00'),
+            ],
+            [
+                new DateTime('2012-05-31 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIFTH,
+                [IntervalInterface::WEDNESDAY],
+                1,
+                new DateTime('2012-08-29 12:00:00'),
+            ],
+            // Last frequency
+            [
+                new DateTime('2012-04-24 12:00:00'),
+                MonthlyInterval::FREQUENCY_LAST,
+                [IntervalInterface::TUESDAY],
+                1,
+                new DateTime('2012-05-29 12:00:00'),
+            ],
+            [
+                new DateTime('2012-04-15 12:00:00'),
+                MonthlyInterval::FREQUENCY_LAST,
+                [IntervalInterface::MONDAY],
+                1,
+                new DateTime('2012-04-30 12:00:00')
+            ],
+            // Multiple days, different frequencies
+            [
+                new DateTime('2012-04-19 12:00:00'),
+                MonthlyInterval::FREQUENCY_LAST,
+                [IntervalInterface::TUESDAY, IntervalInterface::SATURDAY],
+                1,
+                new DateTime('2012-04-24 12:00:00'),
+            ],
+            [
+                new DateTime('2012-04-25 12:00:00'),
+                MonthlyInterval::FREQUENCY_LAST,
+                [IntervalInterface::TUESDAY, IntervalInterface::MONDAY],
+                1,
+                new DateTime('2012-04-30 12:00:00'),
+            ],
+            [
+                new DateTime('2012-04-30 12:00:00'),
+                MonthlyInterval::FREQUENCY_LAST,
+                [IntervalInterface::TUESDAY, IntervalInterface::MONDAY],
+                1,
+                new DateTime('2012-05-28 12:00:00'),
+            ],
+            // Multiple days, multiple months
+            [
+                new DateTime('2013-06-06 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIRST,
+                [IntervalInterface::SATURDAY, IntervalInterface::SUNDAY],
+                2,
+                new DateTime('2013-08-03 12:00:00'),
+            ],
+            [
+                new DateTime('2013-06-07 12:00:00'),
+                MonthlyInterval::FREQUENCY_SECOND,
+                [IntervalInterface::SATURDAY, IntervalInterface::THURSDAY],
+                3,
+                new DateTime('2013-06-08 12:00:00'),
+            ],
+            [
+                new DateTime('2013-06-13 12:00:00'),
+                MonthlyInterval::FREQUENCY_SECOND,
+                [IntervalInterface::SATURDAY, IntervalInterface::THURSDAY],
+                3,
+                new DateTime('2013-09-12 12:00:00'),
+            ],
+            [
+                new DateTime('2013-06-13 12:00:00'),
+                MonthlyInterval::FREQUENCY_SECOND,
+                [IntervalInterface::SUNDAY, IntervalInterface::THURSDAY],
+                3,
+                new DateTime('2013-09-08 12:00:00'),
+            ],
+            [
+                new DateTime('2013-06-19 12:00:00'),
+                MonthlyInterval::FREQUENCY_THIRD,
+                [IntervalInterface::WEDNESDAY],
+                11,
+                new DateTime('2014-05-21 12:00:00'),
+            ],
+            [
+                new DateTime('2013-06-19 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIFTH,
+                [IntervalInterface::WEDNESDAY],
+                6,
+                new DateTime('2014-12-31 12:00:00'),
+            ],
+        ];
+    }
+
+    /**
+     * @return array
+     * @throws \Exception
+     */
+    public function findNextOccurrenceBackwardsProvider()
+    {
+        // DateTime start, frequency, days, months, DateTime expected
+        return [
+            // Start with just default month tests
+            [
+                new DateTime('2012-05-19 12:00:00'),
+                null,
+                [],
+                1,
+                new DateTime('2012-04-19 12:00:00'),
+            ],
+            [
+                new DateTime('2012-06-19 12:00:00'),
+                null,
+                [],
+                2,
+                new DateTime('2012-04-19 12:00:00'),
+            ],
+            [
+                new DateTime('2012-07-19 12:00:00'),
+                null,
+                [],
+                3,
+                new DateTime('2012-04-19 12:00:00'),
+            ],
+            [
+                new DateTime('2012-08-19 12:00:00'),
+                null,
+                [],
+                4,
+                new DateTime('2012-04-19 12:00:00'),
+            ],
+            [
+                new DateTime('2012-09-19 12:00:00'),
+                null,
+                [],
+                5,
+                new DateTime('2012-04-19 12:00:00'),
+            ],
+            [
+                new DateTime('2012-10-19 12:00:00'),
+                null,
+                [],
+                6,
+                new DateTime('2012-04-19 12:00:00'),
+            ],
+            [
+                new DateTime('2012-11-19 12:00:00'),
+                null,
+                [],
+                7,
+                new DateTime('2012-04-19 12:00:00'),
+            ],
+            [
+                new DateTime('2012-12-19 12:00:00'),
+                null,
+                [],
+                8,
+                new DateTime('2012-04-19 12:00:00'),
+            ],
+            [
+                new DateTime('2013-01-19 12:00:00'),
+                null,
+                [],
+                9,
+                new DateTime('2012-04-19 12:00:00'),
+            ],
+            [
+                new DateTime('2013-02-19 12:00:00'),
+                null,
+                [],
+                10,
+                new DateTime('2012-04-19 12:00:00'),
+            ],
+            [
+                new DateTime('2013-03-19 12:00:00'),
+                null,
+                [],
+                11,
+                new DateTime('2012-04-19 12:00:00'),
+            ],
+            [
+                new DateTime('2013-04-19 12:00:00'),
+                null,
+                [],
+                12,
+                new DateTime('2012-04-19 12:00:00'),
+            ],
+            // Try a february month test
+            [
+                new DateTime('2012-03-30 12:00:00'), // leap year
+                null,
+                [],
+                1,
+                new DateTime('2012-02-29 12:00:00'),
+            ],
+            [
+                new DateTime('2013-03-30 12:00:00'), // non leap
+                null,
+                [],
+                1,
+                new DateTime('2013-02-28 12:00:00'),
+            ],
+            // Test 2 months
+            [
+                new DateTime('2012-04-30 12:00:00'), // leap year
+                null,
+                [],
+                2,
+                new DateTime('2012-02-29 12:00:00'),
+            ],
+            [
+                new DateTime('2013-04-30 12:00:00'), // non leap
+                null,
+                [],
+                2,
+                new DateTime('2013-02-28 12:00:00'),
+            ],
+            // Add in a frequency and days
+            [
+                new DateTime('2012-04-19 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIRST,
+                [IntervalInterface::TUESDAY],
+                1,
+                new DateTime('2012-04-03 12:00:00'),
+            ],
+            [
+                new DateTime('2012-05-01 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIRST,
+                [IntervalInterface::TUESDAY],
+                1,
+                new DateTime('2012-04-03 12:00:00'),
+            ],
+            // Multiple days
+            [
+                new DateTime('2012-06-06 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIRST,
+                [IntervalInterface::TUESDAY, IntervalInterface::THURSDAY],
+                1,
+                new DateTime('2012-06-05 12:00:00'),
+            ],
+            [
+                new DateTime('2012-06-02 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIRST,
+                [IntervalInterface::TUESDAY, IntervalInterface::THURSDAY],
+                1,
+                new DateTime('2012-05-03 12:00:00'),
+            ],
+            [
+                new DateTime('2012-07-02 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIRST,
+                [IntervalInterface::TUESDAY, IntervalInterface::THURSDAY],
+                1,
+                new DateTime('2012-06-07 12:00:00'),
+            ],
+            [
+                new DateTime('2012-06-06 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIRST,
+                [IntervalInterface::TUESDAY, IntervalInterface::THURSDAY],
+                1,
+                new DateTime('2012-06-05 12:00:00')
+            ],
+            [
+                new DateTime('2012-06-04 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIRST,
+                [IntervalInterface::TUESDAY, IntervalInterface::THURSDAY],
+                1,
+                new DateTime('2012-05-03 12:00:00')
+            ],
+            [
+                new DateTime('2012-07-06 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIRST,
+                [IntervalInterface::TUESDAY, IntervalInterface::THURSDAY],
+                1,
+                new DateTime('2012-07-05 12:00:00')
+            ],
+            // Second frequency
+            [
+                new DateTime('2012-04-11 12:00:00'),
+                MonthlyInterval::FREQUENCY_SECOND,
+                [IntervalInterface::TUESDAY],
+                1,
+                new DateTime('2012-04-10 12:00:00'),
+            ],
+            [
+                new DateTime('2012-04-10 12:00:00'),
+                MonthlyInterval::FREQUENCY_SECOND,
+                [IntervalInterface::TUESDAY],
+                1,
+                new DateTime('2012-03-13 12:00:00'),
+            ],
+            // Third frequency
+            [
+                new DateTime('2012-04-19 12:00:00'),
+                MonthlyInterval::FREQUENCY_THIRD,
+                [IntervalInterface::TUESDAY],
+                1,
+                new DateTime('2012-04-17 12:00:00'),
+            ],
+            [
+                new DateTime('2012-04-15 12:00:00'),
+                MonthlyInterval::FREQUENCY_THIRD,
+                [IntervalInterface::SUNDAY],
+                1,
+                new DateTime('2012-03-18 12:00:00'),
+            ],
+            // Fourth frequency
+            [
+                new DateTime('2012-04-26 12:00:00'),
+                MonthlyInterval::FREQUENCY_FOURTH,
+                [IntervalInterface::WEDNESDAY],
+                1,
+                new DateTime('2012-04-25 12:00:00'),
+            ],
+            [
+                new DateTime('2012-04-15 12:00:00'),
+                MonthlyInterval::FREQUENCY_FOURTH,
+                [IntervalInterface::TUESDAY],
+                1,
+                new DateTime('2012-03-27 12:00:00'),
+            ],
+            // Fifth frequency
+            [
+                new DateTime('2012-04-19 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIFTH,
+                [IntervalInterface::MONDAY],
+                1,
+                new DateTime('2012-01-30 12:00:00'),
+            ],
+            [
+                new DateTime('2012-05-31 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIFTH,
+                [IntervalInterface::WEDNESDAY],
+                1,
+                new DateTime('2012-05-30 12:00:00'),
+            ],
+            // Last frequency
+            [
+                new DateTime('2012-04-25 12:00:00'),
+                MonthlyInterval::FREQUENCY_LAST,
+                [IntervalInterface::TUESDAY],
+                1,
+                new DateTime('2012-04-24 12:00:00'),
+            ],
+            [
+                new DateTime('2012-04-15 12:00:00'),
+                MonthlyInterval::FREQUENCY_LAST,
+                [IntervalInterface::MONDAY],
+                1,
+                new DateTime('2012-03-26 12:00:00')
+            ],
+            // Multiple days, different frequencies
+            [
+                new DateTime('2012-04-19 12:00:00'),
+                MonthlyInterval::FREQUENCY_LAST,
+                [IntervalInterface::TUESDAY, IntervalInterface::SATURDAY],
+                1,
+                new DateTime('2012-03-31 12:00:00'),
+            ],
+            [
+                new DateTime('2012-04-24 12:00:00'),
+                MonthlyInterval::FREQUENCY_LAST,
+                [IntervalInterface::TUESDAY, IntervalInterface::MONDAY],
+                1,
+                new DateTime('2012-03-27 12:00:00'),
+            ],
+            [
+                new DateTime('2012-04-30 12:00:00'),
+                MonthlyInterval::FREQUENCY_LAST,
+                [IntervalInterface::TUESDAY, IntervalInterface::MONDAY],
+                1,
+                new DateTime('2012-04-24 12:00:00'),
+            ],
+            // Multiple days, multiple months
+            [
+                new DateTime('2013-06-06 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIRST,
+                [IntervalInterface::SATURDAY, IntervalInterface::SUNDAY],
+                2,
+                new DateTime('2013-06-02 12:00:00'),
+            ],
+            [
+                new DateTime('2013-06-02 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIRST,
+                [IntervalInterface::SATURDAY, IntervalInterface::SUNDAY],
+                2,
+                new DateTime('2013-06-01 12:00:00'),
+            ],
+            [
+                new DateTime('2013-06-01 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIRST,
+                [IntervalInterface::SATURDAY, IntervalInterface::SUNDAY],
+                2,
+                new DateTime('2013-04-07 12:00:00'),
+            ],
+            [
+                new DateTime('2013-06-07 12:00:00'),
+                MonthlyInterval::FREQUENCY_SECOND,
+                [IntervalInterface::SATURDAY, IntervalInterface::THURSDAY],
+                3,
+                new DateTime('2013-03-14 12:00:00'),
+            ],
+            [
+                new DateTime('2013-06-13 12:00:00'),
+                MonthlyInterval::FREQUENCY_SECOND,
+                [IntervalInterface::SATURDAY, IntervalInterface::THURSDAY],
+                3,
+                new DateTime('2013-06-08 12:00:00'),
+            ],
+            [
+                new DateTime('2013-06-13 12:00:00'),
+                MonthlyInterval::FREQUENCY_SECOND,
+                [IntervalInterface::SUNDAY, IntervalInterface::TUESDAY],
+                3,
+                new DateTime('2013-06-11 12:00:00'),
+            ],
+            [
+                new DateTime('2013-06-19 12:00:00'),
+                MonthlyInterval::FREQUENCY_THIRD,
+                [IntervalInterface::WEDNESDAY],
+                11,
+                new DateTime('2012-07-18 12:00:00'),
+            ],
+            [
+                new DateTime('2013-06-19 12:00:00'),
+                MonthlyInterval::FREQUENCY_FIFTH,
+                [IntervalInterface::WEDNESDAY],
+                6,
+                new DateTime('2011-06-29 12:00:00'),
+            ],
+        ];
+    }
 
 }

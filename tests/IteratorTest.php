@@ -1282,12 +1282,7 @@ class TenDayInterval implements IntervalInterface
 class OneDayInterval implements IntervalInterface
 {
     /**
-     * Method that finds the next occurrence of the interval from current
-     *
-     * @param DateTime $current
-     * @param int $direction
-     *
-     * @return mixed
+     * @inheritdoc
      */
     public function findNextOccurrence(DateTime $current, $direction = self::FORWARDS)
     {

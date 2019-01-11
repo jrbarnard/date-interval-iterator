@@ -10,6 +10,7 @@ use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
  * Class MonthlyInterval
  *
  * @package JRBarnard\Recurrence\Intervals
+ * Definition of month: https://www.merriam-webster.com/dictionary/calendar%20month
  *
  * Available magic methods:
  */
@@ -23,12 +24,14 @@ class MonthlyInterval implements IntervalInterface
         self::FREQUENCY_THIRD,
         self::FREQUENCY_FOURTH,
         self::FREQUENCY_LAST,
+        self::FREQUENCY_FIFTH,
     ];
 
-    const FREQUENCY_FIRST = 1;
-    const FREQUENCY_SECOND = 2;
-    const FREQUENCY_THIRD = 3;
-    const FREQUENCY_FOURTH = 4;
+    const FREQUENCY_FIRST = 'first';
+    const FREQUENCY_SECOND = 'second';
+    const FREQUENCY_THIRD = 'third';
+    const FREQUENCY_FOURTH = 'fourth';
+    const FREQUENCY_FIFTH = 'fifth';
     const FREQUENCY_LAST = 'last';
 
     /**
@@ -37,7 +40,7 @@ class MonthlyInterval implements IntervalInterface
     protected $months = 1;
 
     /**
-     * @var mixed
+     * @var null|string
      */
     protected $frequency;
 
@@ -45,6 +48,12 @@ class MonthlyInterval implements IntervalInterface
      * @var bool
      */
     protected $allowEmptyDays = true;
+
+    /**
+     * Day of the month of the original current
+     * @var string
+     */
+    protected $originalDayOfMonth;
 
     /**
      * WeeklyInterval constructor.
@@ -67,7 +76,7 @@ class MonthlyInterval implements IntervalInterface
      */
     public function setFrequency($frequency)
     {
-        if (!is_null($frequency) && !in_array($frequency, self::FREQUENCIES)) {
+        if (!is_null($frequency) && (!is_string($frequency) || !in_array($frequency, self::FREQUENCIES))) {
             throw new InvalidArgumentException('Frequency must be a valid frequency or null');
         }
 
@@ -111,73 +120,180 @@ class MonthlyInterval implements IntervalInterface
     }
 
     /**
+     * Add or subtract from a date depending on direction
+     *
+     * @param DateTime $date
+     * @param DateInterval $interval
+     * @param $direction
+     *
+     * @return DateTime
+     */
+    public function addOrSub(DateTime $date, DateInterval $interval, $direction)
+    {
+        if ($direction === self::BACKWARDS) {
+            return $date->sub($interval);
+        }
+
+        return $date->add($interval);
+    }
+
+    /**
+     * Get the next frequency of the days / frequency for the current day starting with the passed next month
+     *
+     * @param DateTime $current
+     * @param DateTime $currentMonth
+     * @param $direction
+     *
+     * @return DateTime|null
+     * @throws \Exception
+     */
+    protected function getNextFrequency(DateTime $current, DateTime $currentMonth, $direction)
+    {
+        $frequency = $this->getFrequency();
+        $days = $this->getDays();
+
+        $storedFrequencyNext = null;
+        foreach ($days as $day) {
+            // Modify to get the first day of the next month
+            $frequencyNext = clone $currentMonth;
+            $frequencyNext->modify(
+                sprintf(
+                    '%s %s of %s %s',
+                    $frequency,
+                    DateHelper::getTextOfDayOfTheWeek($day),
+                    $currentMonth->format('F'),
+                    $currentMonth->format('Y')
+                )
+            );
+            DateHelper::setTimeFrom($frequencyNext, $current);
+
+            // If we have a stored frequency next then we will compare our new frequency next and this to see
+            // who comes first
+            // Only set if the found next frequency is beyond/before current based on direction
+            $frequencyNextTimestamp = $frequencyNext->getTimestamp();
+
+            $shouldStore = !$storedFrequencyNext instanceof DateTime;
+            if (!$shouldStore) {
+                $storedFrequencyNextTimestamp = $storedFrequencyNext->getTimeStamp();
+
+                $nextFrequencyBeyondOrBeforeStored = $direction === self::BACKWARDS ?
+                    $frequencyNextTimestamp > $storedFrequencyNextTimestamp :
+                    $frequencyNextTimestamp < $storedFrequencyNextTimestamp;
+
+                // Store if (depending on direction) the next frequency found is before / beyond the stored
+                // We want closest to the current so if backwards >, if forwards, <
+                if ($nextFrequencyBeyondOrBeforeStored) {
+                    $shouldStore = true;
+                }
+            }
+
+            // Will store if nothing yet stored & if beyond / before current depending on direction
+            $currentTimestamp = $current->getTimestamp();
+            $nextFrequencyBeyondOrBeforeCurrent = $direction === self::BACKWARDS ?
+                $frequencyNextTimestamp < $currentTimestamp :
+                $frequencyNextTimestamp > $currentTimestamp;
+
+            if ($shouldStore && $nextFrequencyBeyondOrBeforeCurrent) {
+                $storedFrequencyNext = $frequencyNext;
+            }
+        }
+
+        //
+        // If we have jumped a month or it's on the incorrect day, try next month (recursive)
+        if ($storedFrequencyNext instanceof DateTime) {
+            $storedFrequencyMonth = $storedFrequencyNext->format('n');
+            $currentMonthMonth = $currentMonth->format('n');
+            $storedFrequencyDayOfWeek = $storedFrequencyNext->format('w');
+
+            if ($storedFrequencyMonth !== $currentMonthMonth || !in_array($storedFrequencyDayOfWeek, $days)) {
+                $storedFrequencyNext = null;
+            }
+        }
+
+        // If we still don't have one set attempt to get next from the following month
+        if (!$storedFrequencyNext instanceof DateTime) {
+            $nextMonth = clone $currentMonth;
+            $this->addOrSub($nextMonth, new DateInterval('P' . $this->getMonths() . 'M'), $direction);
+
+            $storedFrequencyNext = $this->getNextFrequency(
+                $current,
+                $nextMonth,
+                $direction
+            );
+        }
+
+        return $storedFrequencyNext;
+    }
+
+    /**
      * Method that finds the next occurrence of the interval from current
      *
      * @param DateTime $current
      * @param $direction
      *
      * @return DateTime
+     * @throws \Exception
      */
     public function findNextOccurrence(DateTime $current, $direction = self::FORWARDS)
     {
-        return $this->findNext($current, $direction);
-    }
-
-    /**
-     * @param DateTime $current
-     * @param $direction
-     * @param int $daysToAdd
-     *
-     * @return DateTime
-     */
-    protected function findNext(DateTime $current, $direction, $daysToAdd = 0)
-    {
-        $days = $this->getDays();
-        $currentDayOfWeek = DateHelper::getDayOfTheWeek($current);
-
-        if (self::BACKWARDS === $direction) {
-            $days = array_reverse($days);
+        // Get day of the month for current and store if we don't have one
+        if (is_null($this->originalDayOfMonth)) {
+            $this->originalDayOfMonth = $current->format('j');
         }
 
-        $occurrence = null;
+        $basicMonthDateInterval = new DateInterval('P' . $this->getMonths() . 'M');
 
-        foreach ($days as $day) {
-            if (self::BACKWARDS === $direction) {
-                $day = $day - $daysToAdd;
-            } else {
-                $day = $day + $daysToAdd;
+        // Get next month (first of the month)
+        $firstOfThisMonth = clone $current;
+        $firstOfThisMonth->modify('first day of this month');
+        $firstOfNextMonth = clone $firstOfThisMonth;
+        $this->addOrSub($firstOfNextMonth, $basicMonthDateInterval, $direction);
+
+        // If we are looking for days / frequency
+        if (!empty($days = $this->getDays())) {
+            if (is_null($frequency = $this->getFrequency())) {
+                throw new InvalidArgumentException('You must set a frequency and days together');
             }
 
-            if ((self::FORWARDS === $direction && $currentDayOfWeek <= $day) ||
-                (self::BACKWARDS === $direction && $currentDayOfWeek >= $day)) {
-                $daysToMove = $day - $currentDayOfWeek;
+            $storedFrequencyNext = $this->getNextFrequency(
+                $current,
+                $firstOfThisMonth,
+                $direction
+            );
 
-                // Get next date time by adding / subbing the difference in currentDay of week to next day of the week.
-                $interval = new DateInterval('P' . abs($daysToMove) . 'D');
-                $found = clone $current;
-
-                // Depending on direction we will sub or add the interval
-                if (self::BACKWARDS === $direction) {
-                    $found = $found->sub($interval);
-                } else {
-                    $found = $found->add($interval);
-                }
-
-                // If the found is greater / less than the current (depending on direction) then we've actually found
-                // and can break out of the loop.
-                if ((self::BACKWARDS === $direction && $found->getTimestamp() < $current->getTimestamp()) ||
-                    (self::FORWARDS === $direction && $found->getTimestamp() > $current->getTimestamp())) {
-                    $occurrence = $found;
-                    break;
-                }
+            // If we don't have a stored frequency next set then try the next month interval
+            if (!$storedFrequencyNext) {
+                $storedFrequencyNext = $this->getNextFrequency(
+                    $current,
+                    $firstOfNextMonth,
+                    $direction
+                );
             }
+
+            $next = $storedFrequencyNext;
+        } else {
+            // Basic month intervals
+
+            // If the next month has less days than the current day of the month then we will force to be the max
+            $numberOfDaysInNextMonth = $firstOfNextMonth->format('t');
+            $monthDayToSet = $this->originalDayOfMonth;
+
+            // If the next month doesn't have the required number of days that we want, then cap it at the
+            // available number of days
+            if ($numberOfDaysInNextMonth < $monthDayToSet) {
+                $monthDayToSet = $numberOfDaysInNextMonth;
+            }
+
+            $firstOfNextMonth->setDate(
+                $firstOfNextMonth->format('Y'),
+                $firstOfNextMonth->format('m'),
+                $monthDayToSet // Force day of the month
+            );
+
+            $next = $firstOfNextMonth;
         }
 
-        if (!$occurrence instanceof DateTime) {
-            $occurrence = $this->findNext($current, $direction, $daysToAdd + (7 * $this->getWeeks()));
-        }
-
-        return $occurrence;
+        return $next;
     }
 
 //    /**

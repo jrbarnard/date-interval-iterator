@@ -151,7 +151,7 @@ $interval->setWeeks(3);
 (new WeeklyInterval())->everyTuesday()->andEveryWednesday()->ofEvery3rdWeek();
 ```
 * MonthlyInterval - Accepts days of the week and the monthly occurrence, so you can do intervals such as: the last 
-Wednesday and Thursday of every other month. - COMING SOON
+Wednesday and Thursday of every other month.
 ```php
 // Basic usage via constructor
 new MonthlyInterval(MonthlyInterval::LAST, [MonthlyInterval::WEDNESDAY, MonthlyInterval::THURSDAY], 2);
@@ -162,7 +162,7 @@ $interval->setDays([MonthlyInterval::WEDNESDAY, MonthlyInterval::THURSDAY]);
 $interval->setFrequency(MonthlyInterval::LAST);
 $interval->setMonths(2);
 
-// Magic setters
+// Magic setters - Coming soon
 (new MonthlyInterval())->every(MonthlyInterval::LAST, [MonthlyInterval::WEDNESDAY, MonthlyInterval::THURSDAY])->ofEveryMonth(2);
 (new MonthlyInterval())->everyLast()->wednesday()->andThursday()->ofEvery2ndMonth();
 ```
