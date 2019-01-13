@@ -2,13 +2,13 @@
 namespace JRBarnard\RecurrenceTests\IntervalTests;
 
 use DateTime;
+//use Mockery as m;
 use ReflectionClass;
 use JRBarnard\RecurrenceTests\TestCase;
 use JRBarnard\Recurrence\Intervals\SetsDays;
 use JRBarnard\Recurrence\Intervals\MonthlyInterval;
 use JRBarnard\Recurrence\Intervals\IntervalInterface;
 use JRBarnard\Recurrence\Exceptions\BadMethodCallException;
-use JRBarnard\Recurrence\Exceptions\SkipOccurrenceException;
 use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
 
 /**
@@ -43,18 +43,18 @@ class MonthlyIntervalTest extends TestCase
      *      - if attempt to run when has days but no frequency set throw - done
      *  - with iterator
      *      - if forces to end of month, next month which has the valid days will use them - done
-     * TODO:
      *  - every fluent setter
-     *      - will accept frequency and days as params and call setFrequency and setDays
-     *      - will return self
+     *      - will accept frequency and days as params and call setFrequency and setDays - done
+     *      - will return self - done
      *  - ofEveryMonth fluent setter
-     *      - will accept int and pass to setMonth
-     *      - will return self
+     *      - will accept int and pass to setMonth - done
+     *      - will return self - done
+     * TODO:
      *  - every{Frequency} fluent setter
-     *      - will set frequency based on frequency used (e.g everyLast)
-     *      - will throw if invalid
-     *      - will call setFrequency and pass through frequency
-     *      - will return self
+     *      - will set frequency based on frequency used (e.g everyLast) - done
+     *      - will throw if invalid - done
+     *      - will call setFrequency and pass through frequency - done
+     *      - will return self - done
      *  - {day constant} fluent setter
      *      - will throw if invalid day
      *      - will pass through to setDays
@@ -68,6 +68,94 @@ class MonthlyIntervalTest extends TestCase
      *      - will pass parsed regularity of months to setMonths
      *      - will return self
      */
+
+    /** @test */
+    public function everyFrequency_fluent_setter_will_call_setFrequency_with_relevant_frequency()
+    {
+        $map = [
+            MonthlyInterval::FREQUENCY_FIRST => 'everyFirst',
+            MonthlyInterval::FREQUENCY_SECOND => 'everySecond',
+            MonthlyInterval::FREQUENCY_THIRD => 'everyThird',
+            MonthlyInterval::FREQUENCY_FOURTH => 'everyFourth',
+            MonthlyInterval::FREQUENCY_FIFTH => 'everyFifth',
+            MonthlyInterval::FREQUENCY_LAST => 'everyLast'
+        ];
+
+        $setUpMock = function ($frequency) {
+            $mockInterval = $this->getMockBuilder(MonthlyInterval::class)
+                ->disableOriginalConstructor()
+                ->setMethods([
+                    'setFrequency',
+                ])
+                ->getMock();
+
+            $mockInterval->expects($this->once())
+                ->method('setFrequency')
+                ->with($frequency)
+                ->willReturnSelf();
+        };
+
+        foreach ($map as $frequency => $method) {
+            $mockInterval = $setUpMock($frequency);
+            $this->assertSame($mockInterval, $mockInterval->{$method}($frequency));
+        }
+    }
+
+    /** @test */
+    public function everyFrequency_fluent_setter_will_throw_if_invalid_frequency()
+    {
+        $this->expectException(BadMethodCallException::class);
+        (new MonthlyInterval())->everyInvalidFrequency(MonthlyInterval::FREQUENCY_THIRD);
+    }
+
+    /** @test */
+    public function ofEveryMonth_will_accept_month_and_pass_to_set_month()
+    {
+        $mockInterval = $this->getMockBuilder(MonthlyInterval::class)
+            ->disableOriginalConstructor()
+            ->setMethods([
+                'setMonths',
+            ])
+            ->getMock();
+
+        $month = 7;
+
+        $mockInterval->expects($this->once())
+            ->method('setMonths')
+            ->with($month)
+            ->willReturnSelf();
+
+        $this->assertSame($mockInterval, $mockInterval->ofEveryMonth($month));
+    }
+
+    /** @test */
+    public function every_fluent_setter_will_accept_frequency_and_days_and_call_setFrequency_and_set_days()
+    {
+        $mockInterval = $this->getMockBuilder(MonthlyInterval::class)
+            ->disableOriginalConstructor()
+            ->setMethods([
+                'setDays',
+                'setFrequency',
+            ])
+            ->getMock();
+
+        $frequency = MonthlyInterval::FREQUENCY_SECOND;
+        $days = [
+            IntervalInterface::MONDAY,
+            IntervalInterface::SUNDAY
+        ];
+
+        $mockInterval->expects($this->once())
+            ->method('setDays')
+            ->with($days)
+            ->willReturnSelf();
+        $mockInterval->expects($this->once())
+            ->method('setFrequency')
+            ->with($frequency)
+            ->willReturnSelf();
+
+        $this->assertSame($mockInterval, $mockInterval->every($frequency, $days));
+    }
 
     /** @test */
     public function findNextOccurrence_if_attempt_to_run_when_has_days_but_no_frequency_set_throw()

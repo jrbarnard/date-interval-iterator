@@ -296,6 +296,25 @@ class MonthlyInterval implements IntervalInterface
         return $next;
     }
 
+    /**
+     * @param $frequency
+     * @param $days
+     *
+     * @return $this
+     */
+    public function every($frequency, $days)
+    {
+        $this->setDays($days);
+        $this->setFrequency($frequency);
+        return $this;
+    }
+
+    public function ofEveryMonth($month)
+    {
+        $this->setMonths($month);
+        return $this;
+    }
+
 //    /**
 //     * @param $name
 //     * @param $arguments
