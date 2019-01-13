@@ -2,7 +2,6 @@
 namespace JRBarnard\RecurrenceTests\IntervalTests;
 
 use DateTime;
-//use Mockery as m;
 use ReflectionClass;
 use JRBarnard\RecurrenceTests\TestCase;
 use JRBarnard\Recurrence\Intervals\SetsDays;
@@ -49,25 +48,148 @@ class MonthlyIntervalTest extends TestCase
      *  - ofEveryMonth fluent setter
      *      - will accept int and pass to setMonth - done
      *      - will return self - done
-     * TODO:
      *  - every{Frequency} fluent setter
      *      - will set frequency based on frequency used (e.g everyLast) - done
      *      - will throw if invalid - done
      *      - will call setFrequency and pass through frequency - done
      *      - will return self - done
      *  - {day constant} fluent setter
-     *      - will throw if invalid day
-     *      - will pass through to setDays
-     *      - will return self
+     *      - will throw if invalid day - done
+     *      - will pass through to setDays - done
+     *      - will return self - done
      *  - and{day constant} fluent setter
-     *      - will throw if invalid day constant
-     *      - will get days then add passed day and set unique days to setDays
-     *      - will return self
+     *      - will throw if invalid day constant - done
+     *      - will get days then add passed day and set days to setDays - done
+     *      - if same day already exists will only set unique - done
+     *      - will return self - done
+     * TODO:
      *  - ofEvery{2nd->12th}Month fluent setter
      *      - will throw if invalid
      *      - will pass parsed regularity of months to setMonths
      *      - will return self
      */
+
+    /** @test */
+    public function and_day_constant_fluent_setter_will_set_days_with_uniqued_days()
+    {
+        $interval = new MonthlyInterval();
+        $interval->setDays($days = [
+            IntervalInterface::WEDNESDAY,
+            IntervalInterface::THURSDAY
+        ]);
+        $this->assertEquals($days, $interval->getDays());
+
+        $interval->andThursday();
+
+        $this->assertSame($days, $interval->getDays());
+    }
+
+    /** @test */
+    public function and_day_constant_fluent_setter_will_call_set_days_and_add_and_return_self()
+    {
+        $map = [
+            IntervalInterface::SUNDAY => 'andSunday',
+            IntervalInterface::MONDAY => 'andMonday',
+            IntervalInterface::TUESDAY => 'andTuesday',
+            IntervalInterface::WEDNESDAY => 'andWednesday',
+            IntervalInterface::THURSDAY => 'andThursday',
+            IntervalInterface::FRIDAY => 'andFriday',
+            IntervalInterface::SATURDAY => 'andSaturday',
+        ];
+
+        $setUpMock = function ($day) {
+            $mockInterval = $this->getMockBuilder(MonthlyInterval::class)
+                ->disableOriginalConstructor()
+                ->setMethods([
+                    'setDays',
+                ])
+                ->getMock();
+
+            $mockInterval->expects($this->once())
+                ->method('setDays')
+                ->with([$day])
+                ->willReturnSelf();
+
+            return $mockInterval;
+        };
+
+        foreach ($map as $day => $method) {
+            $mockInterval = $setUpMock($day);
+            $this->assertSame($mockInterval, $mockInterval->{$method}($day));
+        }
+
+        // Test with adding to existing
+        foreach ($map as $day => $method) {
+            // Get other days to choose from
+            $otherDays = array_rand(array_filter($map, function ($otherDay) use ($day) {
+                return $otherDay !== $day;
+            }, ARRAY_FILTER_USE_KEY), 2);
+            $this->assertCount(2, $otherDays);
+            foreach ($otherDays as $otherDay) {
+                $this->assertNotSame($day, $otherDay);
+            }
+
+            $interval = new MonthlyInterval();
+            $interval->setDays($otherDays);
+            $this->assertEquals($otherDays, $interval->getDays());
+
+            $this->assertSame($interval, $interval->{$method}($day));
+            $daysResult = $interval->getDays();
+            $expectedDaysResult = array_merge($otherDays, [$day]);
+            sort($daysResult);
+            sort($expectedDaysResult);
+            $this->assertSame($expectedDaysResult, $daysResult);
+        }
+    }
+
+    /** @test */
+    public function and_day_constant_fluent_setter_will_throw_if_invalid_day()
+    {
+        $this->expectException(BadMethodCallException::class);
+        (new MonthlyInterval())->andInvalidDayOfTheWeek(IntervalInterface::TUESDAY);
+    }
+
+    /** @test */
+    public function day_constant_fluent_setter_will_call_set_days_and_return_self()
+    {
+        $map = [
+            IntervalInterface::SUNDAY => 'sunday',
+            IntervalInterface::MONDAY => 'monday',
+            IntervalInterface::TUESDAY => 'tuesday',
+            IntervalInterface::WEDNESDAY => 'wednesday',
+            IntervalInterface::THURSDAY => 'thursday',
+            IntervalInterface::FRIDAY => 'friday',
+            IntervalInterface::SATURDAY => 'saturday',
+        ];
+
+        $setUpMock = function ($day) {
+            $mockInterval = $this->getMockBuilder(MonthlyInterval::class)
+                ->disableOriginalConstructor()
+                ->setMethods([
+                    'setDays',
+                ])
+                ->getMock();
+
+            $mockInterval->expects($this->once())
+                ->method('setDays')
+                ->with([$day])
+                ->willReturnSelf();
+
+            return $mockInterval;
+        };
+
+        foreach ($map as $day => $method) {
+            $mockInterval = $setUpMock($day);
+            $this->assertSame($mockInterval, $mockInterval->{$method}($day));
+        }
+    }
+
+    /** @test */
+    public function day_constant_fluent_setter_will_throw_if_invalid()
+    {
+        $this->expectException(BadMethodCallException::class);
+        (new MonthlyInterval())->invalidDayOfTheWeek(IntervalInterface::TUESDAY);
+    }
 
     /** @test */
     public function everyFrequency_fluent_setter_will_call_setFrequency_with_relevant_frequency()
@@ -93,6 +215,8 @@ class MonthlyIntervalTest extends TestCase
                 ->method('setFrequency')
                 ->with($frequency)
                 ->willReturnSelf();
+
+            return $mockInterval;
         };
 
         foreach ($map as $frequency => $method) {

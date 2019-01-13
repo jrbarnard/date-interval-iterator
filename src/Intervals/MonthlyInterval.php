@@ -4,6 +4,7 @@ namespace JRBarnard\Recurrence\Intervals;
 use DateTime;
 use DateInterval;
 use JRBarnard\Recurrence\DateHelper;
+use JRBarnard\Recurrence\Exceptions\BadMethodCallException;
 use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
 
 /**
@@ -13,6 +14,31 @@ use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
  * Definition of month: https://www.merriam-webster.com/dictionary/calendar%20month
  *
  * Available magic methods:
+ *
+ * Frequency setters:
+ * @method everyFirst
+ * @method everySecond
+ * @method everyThird
+ * @method everyFourth
+ * @method everyFifth
+ * @method everyLast
+ *
+ * Day setters
+ * @method monday
+ * @method tuesday
+ * @method wednesday
+ * @method thursday
+ * @method friday
+ * @method saturday
+ * @method sunday
+ * @method andMonday
+ * @method andTuesday
+ * @method andWednesday
+ * @method andThursday
+ * @method andFriday
+ * @method andSaturday
+ * @method andSunday
+ *
  */
 class MonthlyInterval implements IntervalInterface
 {
@@ -304,89 +330,79 @@ class MonthlyInterval implements IntervalInterface
      */
     public function every($frequency, $days)
     {
-        $this->setDays($days);
-        $this->setFrequency($frequency);
-        return $this;
+        return $this->setDays($days)
+            ->setFrequency($frequency);
     }
 
+    /**
+     * @param $month
+     *
+     * @return MonthlyInterval
+     */
     public function ofEveryMonth($month)
     {
-        $this->setMonths($month);
-        return $this;
+        return $this->setMonths($month);
     }
 
-//    /**
-//     * @param $name
-//     * @param $arguments
-//     *
-//     * @return mixed
-//     */
-//    public function __call($name, $arguments)
-//    {
-//        $everyPrefix = 'every';
-//        $andEveryPrefix = 'andEvery';
-//        $ofEveryPrefix = 'ofEvery';
-//        $ofEverySuffix = 'Week';
-//
-//        // Magic call to every{day} methods
-//        if (false !== strpos($name, $everyPrefix, 0)) {
-//            $day = $this->getDayFromMethod($name, $everyPrefix);
-//            if (false !== $day) {
-//                $this->setDays($day);
-//
-//                return $this;
-//            }
-//        }
-//
-//        // Magic call to andEvery{day} methods
-//        if (false !== strpos($name, $andEveryPrefix, 0)) {
-//            $day = $this->getDayFromMethod($name, $andEveryPrefix);
-//            if (false !== $day) {
-//                $this->setDays(array_merge($this->getDays(), [$day]));
-//
-//                return $this;
-//            }
-//        }
-//
-//        // Magic call to ofEvery{week}Week methods
-//        $ofEveryPrefixLen = strlen($ofEveryPrefix);
-//        $ofEverySuffixLen = strlen($ofEverySuffix);
-//
-//        // Starts with ofEvery, ends with Week
-//        if (false !== strpos($name, $ofEveryPrefix) && $ofEverySuffix === substr($name, -1 * $ofEverySuffixLen)) {
-//            // Get the bit in between and cast (relies on php's internal type juggling)
-//            $weeks = (int) substr($name, $ofEveryPrefixLen, -1 * $ofEverySuffixLen);
-//
-//            if ($weeks > 0) {
-//                $this->ofEveryWeek($weeks);
-//
-//                return $this;
-//            }
-//        }
-//
-//        throw new BadMethodCallException('Call to undefined method {' . __CLASS__ . '}::{' . $name . '}()');
-//    }
+    /**
+     * @param $name
+     * @param $arguments
+     *
+     * @return mixed
+     */
+    public function __call($name, $arguments)
+    {
+        // Anon function to get the FQN for a class constant
+        $getConstantName = function ($class, $constant) {
+            return sprintf(
+                '%s::%s',
+                $class,
+                $constant
+            );
+        };
 
-//    /**
-//     * @param $methodName
-//     * @param $prefix
-//     *
-//     * @return bool|int
-//     */
-//    protected function getDayFromMethod($methodName, $prefix)
-//    {
-//        $day = strtoupper(substr($methodName, strlen($prefix)));
-//
-//        if (!defined('self::' . $day)) {
-//            return false;
-//        }
-//
-//        $day = constant('self::' . $day);
-//
-//        if (!$this->isValidDay($day)) {
-//            return false;
-//        }
-//
-//        return $day;
-//    }
+        $everyPrefix = 'every';
+        $andPrefix = 'and';
+
+        // Magic call to every{frequency} methods
+        if (false !== strpos($name, $everyPrefix, 0)) {
+            // Handle every{Frequency}() magic methods
+            $frequencyConstant = $getConstantName(
+                self::class,
+                sprintf(
+                    'FREQUENCY_%s',
+                    strtoupper(substr($name, strlen($everyPrefix)))
+                )
+            );
+
+            if (defined($frequencyConstant)) {
+                return $this->setFrequency(constant($frequencyConstant));
+            }
+        } else {
+            $daysToSet = [];
+            $dayConstantName = $name;
+
+            // Handle and{day}() magic methods
+            //  Defaults will handle the {day}() magic methods
+            if (false !== strpos($name, $andPrefix, 0)) {
+                $daysToSet = $this->getDays();
+                $dayConstantName = substr($name, strlen($andPrefix));
+            }
+
+            $dayConstantName = $getConstantName(
+                IntervalInterface::class,
+                strtoupper($dayConstantName)
+            );
+
+            if (defined($dayConstantName)) {
+                array_push($daysToSet, constant($dayConstantName));
+            }
+
+            if (!empty($daysToSet)) {
+                return $this->setDays(array_unique($daysToSet));
+            }
+        }
+
+        throw new BadMethodCallException('Call to undefined method {' . __CLASS__ . '}::{' . $name . '}()');
+    }
 }
