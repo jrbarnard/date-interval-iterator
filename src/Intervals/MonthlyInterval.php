@@ -239,7 +239,6 @@ class MonthlyInterval implements IntervalInterface
             }
         }
 
-        //
         // If we have jumped a month or it's on the incorrect day, try next month (recursive)
         if ($storedFrequencyNext instanceof DateTime) {
             $storedFrequencyMonth = $storedFrequencyNext->format('n');
@@ -301,15 +300,6 @@ class MonthlyInterval implements IntervalInterface
                 $firstOfThisMonth,
                 $direction
             );
-
-            // If we don't have a stored frequency next set then try the next month interval
-            if (!$storedFrequencyNext) {
-                $storedFrequencyNext = $this->getNextFrequency(
-                    $current,
-                    $firstOfNextMonth,
-                    $direction
-                );
-            }
 
             $next = $storedFrequencyNext;
         } else {
