@@ -162,7 +162,7 @@ $interval->setDays([MonthlyInterval::WEDNESDAY, MonthlyInterval::THURSDAY]);
 $interval->setFrequency(MonthlyInterval::LAST);
 $interval->setMonths(2);
 
-// Magic setters - Coming soon
+// Magic setters
 (new MonthlyInterval())->every(MonthlyInterval::LAST, [MonthlyInterval::WEDNESDAY, MonthlyInterval::THURSDAY])->ofEveryMonth(2);
 (new MonthlyInterval())->everyLast()->wednesday()->andThursday()->ofEvery2ndMonth();
 ```
