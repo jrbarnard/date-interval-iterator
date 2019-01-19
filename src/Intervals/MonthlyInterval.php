@@ -3,6 +3,7 @@ namespace JRBarnard\Recurrence\Intervals;
 
 use DateTime;
 use DateInterval;
+use NumberFormatter;
 use JRBarnard\Recurrence\DateHelper;
 use JRBarnard\Recurrence\Exceptions\BadMethodCallException;
 use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
@@ -38,6 +39,20 @@ use JRBarnard\Recurrence\Exceptions\InvalidArgumentException;
  * @method andFriday
  * @method andSaturday
  * @method andSunday
+ *
+ * Month setters:
+ * @method ofEvery2ndMonth
+ * @method ofEveryOtherMonth
+ * @method ofEvery3rdMonth
+ * @method ofEvery4thMonth
+ * @method ofEvery5thMonth
+ * @method ofEvery6thMonth
+ * @method ofEvery7thMonth
+ * @method ofEvery8thMonth
+ * @method ofEvery9thMonth
+ * @method ofEvery10thMonth
+ * @method ofEvery11thMonth
+ * @method ofEvery12thMonth
  *
  */
 class MonthlyInterval implements IntervalInterface
@@ -363,9 +378,33 @@ class MonthlyInterval implements IntervalInterface
 
         $everyPrefix = 'every';
         $andPrefix = 'and';
+        $ofEveryPrefix = 'ofEvery';
+        $monthSuffix = 'Month';
+
+        /**
+         * Check if we have a specific prefix
+         * @param $string
+         * @param $prefix
+         *
+         * @return bool
+         */
+        $hasPrefix = function ($string, $prefix) {
+            return false !== strpos($string, $prefix, 0);
+        };
+
+        /**
+         * Check if we have a specific suffix
+         * @param $string
+         * @param $suffix
+         *
+         * @return bool|int
+         */
+        $hasSuffix = function ($string, $suffix) {
+            return false !== strpos($string, $suffix, -0);
+        };
 
         // Magic call to every{frequency} methods
-        if (false !== strpos($name, $everyPrefix, 0)) {
+        if ($hasPrefix($name, $everyPrefix)) {
             // Handle every{Frequency}() magic methods
             $frequencyConstant = $getConstantName(
                 self::class,
@@ -378,7 +417,39 @@ class MonthlyInterval implements IntervalInterface
             if (defined($frequencyConstant)) {
                 return $this->setFrequency(constant($frequencyConstant));
             }
+        } elseif ($hasPrefix($name, $ofEveryPrefix) && false !== $hasSuffix($name, $monthSuffix)) {
+            // Month setter
+            // get ofEvery{$1}Month
+            $ofEveryPrefixLength = strlen($ofEveryPrefix);
+            $monthSuffixLength = strlen($monthSuffix);
+            $monthNumericRepresentation = substr(
+                $name,
+                $ofEveryPrefixLength,
+                strlen($name) - $monthSuffixLength - $ofEveryPrefixLength
+            );
+
+            // Wrap in try catch to handle invalid month numbers as bad method calls
+            try {
+                if ($monthNumericRepresentation === 'Other') {
+                    $monthNumber = 2;
+                } else {
+                    $monthNumber = (int) $monthNumericRepresentation;
+
+                    // Check if the passed number+ordinal is the correct ordinal for the number
+                    $formatter = new NumberFormatter('en-GB', NumberFormatter::ORDINAL);
+                    $ordinalMonthNumber = $formatter->format($monthNumber);
+
+                    if ($ordinalMonthNumber !== $monthNumericRepresentation) {
+                        throw new InvalidArgumentException('Invalid number ordinal');
+                    }
+                }
+
+                return $this->setMonths($monthNumber);
+            } catch (InvalidArgumentException $e) {
+                // Catch, don't throw allow to fall through to bad method call
+            }
         } else {
+            // Days setter
             $daysToSet = [];
             $dayConstantName = $name;
 

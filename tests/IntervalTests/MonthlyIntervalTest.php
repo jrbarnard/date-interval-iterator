@@ -62,12 +62,39 @@ class MonthlyIntervalTest extends TestCase
      *      - will get days then add passed day and set days to setDays - done
      *      - if same day already exists will only set unique - done
      *      - will return self - done
-     * TODO:
-     *  - ofEvery{2nd->12th}Month fluent setter
-     *      - will throw if invalid
-     *      - will pass parsed regularity of months to setMonths
-     *      - will return self
+     *  - ofEvery{1st->12th & Other}Month fluent setter
+     *      - will throw if invalid - done
+     *      - will pass parsed regularity of months to setMonths - done
+     *      - will return self - done
      */
+
+    /**
+     * @dataProvider ofEveryNMonthValidProvider
+     * @test
+     *
+     * @param $method
+     * @param $expected
+     */
+    public function ofEveryNMonth_fluent_setter_will_pass_parsed_months_to_setMonths_and_return_self($method, $expected)
+    {
+        $interval = new MonthlyInterval();
+        $result = $interval->{$method}();
+        $this->assertSame($result, $interval);
+        $this->assertSame($expected, $interval->getMonths());
+    }
+
+    /**
+     * @dataProvider ofEveryNMonthInvalidMethodsProvider
+     * @test
+     *
+     * @param $invalidMethod
+     */
+    public function ofEveryNMonth_fluent_setter_will_throw_if_invalid($invalidMethod)
+    {
+        $interval = new MonthlyInterval();
+        $this->expectException(BadMethodCallException::class);
+        $interval->{$invalidMethod}();
+    }
 
     /** @test */
     public function and_day_constant_fluent_setter_will_set_days_with_uniqued_days()
@@ -1268,6 +1295,80 @@ class MonthlyIntervalTest extends TestCase
                 [IntervalInterface::WEDNESDAY],
                 6,
                 new DateTime('2011-06-29 12:00:00'),
+            ],
+        ];
+    }
+
+    /**
+     * @return array
+     */
+    public function ofEveryNMonthInvalidMethodsProvider()
+    {
+        return [
+            ['ofEvery0thMonth'],
+            ['ofEvery13thMonth'],
+            ['ofEvery2rdMonth'],
+            ['ofEvery11ndMonth'],
+        ];
+    }
+
+    /**
+     * @return array
+     */
+    public function ofEveryNMonthValidProvider()
+    {
+        return [
+            [
+                'ofEvery1stMonth',
+                1
+            ],
+            [
+                'ofEvery2ndMonth',
+                2
+            ],
+            [
+                'ofEveryOtherMonth',
+                2
+            ],
+            [
+                'ofEvery3rdMonth',
+                3
+            ],
+            [
+                'ofEvery4thMonth',
+                4
+            ],
+            [
+                'ofEvery5thMonth',
+                5
+            ],
+            [
+                'ofEvery6thMonth',
+                6
+            ],
+            [
+                'ofEvery7thMonth',
+                7
+            ],
+            [
+                'ofEvery8thMonth',
+                8
+            ],
+            [
+                'ofEvery9thMonth',
+                9
+            ],
+            [
+                'ofEvery10thMonth',
+                10
+            ],
+            [
+                'ofEvery11thMonth',
+                11
+            ],
+            [
+                'ofEvery12thMonth',
+                12
             ],
         ];
     }
